@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HireFlow AI
+
+AI-powered HR recruitment automation platform. Automates the full recruitment lifecycle — job creation, candidate application, resume parsing, AI screening, interview scheduling, offer generation, e-signature, and onboarding.
+
+**Architecture**
+
+```
+Next.js (UI) → Supabase (system of record) → Make.com (orchestration) → Groq (AI) + external services → Supabase → Next.js
+```
+
+- **Next.js** — dashboard, candidate application forms, auth. No core automation logic lives here.
+- **Supabase** — Postgres database, auth, storage, row-level security. Source of truth for all recruitment data.
+- **Make.com** — orchestrates the recruitment pipeline via webhooks: resume processing, AI screening, interview scheduling, offers, onboarding. See [docs/make-scenarios/](docs/make-scenarios/).
+- **Groq** — AI layer for job description generation, resume analysis, candidate scoring signals, interview questions, and evaluation summaries. All scoring math is deterministic backend logic — the LLM never assigns the final number.
+
+**Build status:** see [docs/ROADMAP.md](docs/ROADMAP.md) for the phased build plan and current progress.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local   # fill in your own keys — see docs/SETUP.md
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Documentation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [docs/ROADMAP.md](docs/ROADMAP.md) — phase-by-phase build plan
+- [docs/SETUP.md](docs/SETUP.md) — accounts/keys you need to provision, and where they go
+- [docs/make-scenarios/](docs/make-scenarios/) — Make.com scenario blueprints (added in Phase 4)
+- [supabase/schema.sql](supabase/schema.sql) — database schema (added in Phase 1)
