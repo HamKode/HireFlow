@@ -18,6 +18,19 @@ export async function GET(request: Request) {
   }
 
   const supabase = createServiceRoleClient();
+
+  // Storage bypasses RLS entirely, so ownership must be verified explicitly:
+  // confirm a candidate with this exact resume_url belongs to the caller's org.
+  const { data: candidate } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('resume_url', path)
+    .eq('organization_id', user.profile.organization_id)
+    .maybeSingle();
+  if (!candidate) {
+    return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  }
+
   const { data, error } = await supabase.storage.from('resumes').createSignedUrl(path, 60 * 5);
 
   if (error || !data) {

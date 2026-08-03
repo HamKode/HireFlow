@@ -15,7 +15,7 @@ export async function scheduleInterview(
   _prevState: InterviewFormState,
   formData: FormData
 ): Promise<InterviewFormState> {
-  await requireRole('admin', 'hr_manager', 'recruiter');
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
 
   const scheduledAt = String(formData.get('scheduled_at') ?? '');
   if (!scheduledAt) {
@@ -27,6 +27,7 @@ export async function scheduleInterview(
   const { data: interview, error } = await supabase
     .from('interviews')
     .insert({
+      organization_id: user.profile.organization_id,
       application_id: applicationId,
       interviewer_id: String(formData.get('interviewer_id') ?? '') || null,
       interview_type: String(formData.get('interview_type') ?? 'technical') as InterviewType,
@@ -49,6 +50,7 @@ export async function scheduleInterview(
     .single();
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: applicationId,
     action: 'INTERVIEW_SCHEDULED',
     status: 'success',
@@ -109,6 +111,7 @@ export async function submitFeedback(
   const supabase = await createClient();
   const { error } = await supabase.from('interview_feedback').upsert(
     {
+      organization_id: user.profile.organization_id,
       interview_id: interviewId,
       interviewer_id: user.id,
       technical_knowledge: num('technical_knowledge'),
@@ -137,6 +140,7 @@ export async function submitFeedback(
     .single();
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: applicationId,
     action: 'INTERVIEW_FEEDBACK_SUBMITTED',
     status: 'success',
@@ -151,6 +155,7 @@ export async function submitFeedback(
       .eq('id', application.candidate_id)
       .single();
     await notifyRecruitingTeam(supabase, {
+      organizationId: user.profile.organization_id,
       title: 'Interview feedback submitted',
       message: `Feedback for ${candidate?.full_name ?? 'a candidate'} is ready for review.`,
       relatedApplicationId: applicationId,

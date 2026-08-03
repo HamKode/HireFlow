@@ -43,5 +43,12 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - You: (optional) a free Vercel account if you want this hosted rather than run locally — see the deployment section below.
 - Verified: final demo data counts — 6 jobs, 51 candidates, 47 applications, 42 scores, 3 interviews (with feedback + AI evaluations), 3 offers (draft/sent/signed), 6 onboarding tasks, 66 automation log entries.
 
+## Phase 9 — Multi-Tenancy ✅
+Added after the initial 8 phases, once the plan became putting this in front of real HR teams (e.g. sharing publicly) rather than a single-company demo.
+
+- Claude: full multi-tenant retrofit — a new `organizations` table; `organization_id` added to every table (jobs, candidates, applications, scores, interviews, feedback, offers, onboarding tasks, notifications, automation logs, settings); every RLS policy rewritten to filter by `current_organization_id()`; every service-role code path (public apply pipeline, AI routes, signed-URL routes, the e-signature webhook) updated to enforce tenant ownership explicitly, since service-role bypasses RLS entirely; candidate email uniqueness changed from global to per-organization (the same person can be a candidate at two different companies); `notifyRecruitingTeam` fixed to stop fanning out notifications across every tenant (a real bug caught before it shipped); signup now takes a company name and creates a brand-new organization per signup, with that user as its admin; `app_settings` moved from one global row to one per organization, with company name now living on `organizations.name`; optional per-org Make.com webhook URL (falls back to the platform-wide one).
+- You: ran the migration SQL in the Supabase SQL editor (adds `organizations`, backfills all existing data into one default org so your account and demo data kept working unchanged, rewrites every policy).
+- Verified: full typecheck/lint/build clean; migration confirmed against the live database (existing admin + all demo data correctly assigned to one default organization); real isolation test — created a second signup ("Totally Different Company Inc"), confirmed it saw **zero** of the original 6 jobs / 51 candidates / 47 applications, and could create and see its own data independently. Test tenant cleaned up after.
+
 ---
 **Rule for every phase:** nothing moves to the next phase until the current one runs end-to-end without errors.

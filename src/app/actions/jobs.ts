@@ -58,6 +58,7 @@ export async function createJob(_prevState: JobFormState, formData: FormData): P
     .from('jobs')
     .insert({
       ...payload,
+      organization_id: user.profile.organization_id,
       created_by: user.id,
       status: 'draft' as JobStatus,
       scoring_weights: settings.default_scoring_weights,

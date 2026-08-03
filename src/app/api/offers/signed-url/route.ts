@@ -16,6 +16,19 @@ export async function GET(request: Request) {
   }
 
   const supabase = createServiceRoleClient();
+
+  // Storage bypasses RLS entirely, so ownership must be verified explicitly:
+  // confirm an offer with this exact pdf_url belongs to the caller's org.
+  const { data: offer } = await supabase
+    .from('offers')
+    .select('id')
+    .eq('pdf_url', path)
+    .eq('organization_id', user.profile.organization_id)
+    .maybeSingle();
+  if (!offer) {
+    return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  }
+
   const { data, error } = await supabase.storage.from('offer-letters').createSignedUrl(path, 60 * 5);
 
   if (error || !data) {

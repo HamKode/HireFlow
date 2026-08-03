@@ -10,8 +10,14 @@ const DEFAULT_TASKS = [
   { task_name: 'Add to relevant systems', description: 'Payroll, benefits enrollment, Slack/communication tools.' },
 ];
 
-export async function createDefaultOnboardingTasks(supabase: SupabaseClient, candidateId: string, offerId: string) {
+export async function createDefaultOnboardingTasks(
+  supabase: SupabaseClient,
+  organizationId: string,
+  candidateId: string,
+  offerId: string
+) {
   const rows = DEFAULT_TASKS.map((t) => ({
+    organization_id: organizationId,
     candidate_id: candidateId,
     offer_id: offerId,
     task_name: t.task_name,

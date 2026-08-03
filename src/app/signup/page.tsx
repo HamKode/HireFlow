@@ -11,16 +11,29 @@ export default function SignupPage() {
     <main className="flex flex-1 items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Create your company&apos;s workspace</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            New accounts default to the Recruiter role — an admin can change this later.
+            You&apos;ll be the admin of your own private HireFlow workspace — your jobs, candidates, and data
+            stay separate from every other company on the platform.
           </p>
         </div>
 
         <form action={action} className="space-y-4">
           <div className="space-y-1.5">
+            <label htmlFor="company_name" className="text-sm font-medium">
+              Company name
+            </label>
+            <input
+              id="company_name"
+              name="company_name"
+              required
+              placeholder="Acme Inc."
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white"
+            />
+          </div>
+          <div className="space-y-1.5">
             <label htmlFor="full_name" className="text-sm font-medium">
-              Full name
+              Your full name
             </label>
             <input
               id="full_name"

@@ -13,7 +13,7 @@ export async function createApplication(
   _prevState: ApplicationFormState,
   formData: FormData
 ): Promise<ApplicationFormState> {
-  await requireRole('admin', 'hr_manager', 'recruiter');
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
 
   const job_id = String(formData.get('job_id') ?? '');
   const candidate_id = String(formData.get('candidate_id') ?? '');
@@ -26,7 +26,7 @@ export async function createApplication(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('applications')
-    .insert({ job_id, candidate_id, source })
+    .insert({ organization_id: user.profile.organization_id, job_id, candidate_id, source })
     .select('*')
     .single();
 
@@ -38,6 +38,7 @@ export async function createApplication(
   }
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: data.id,
     candidate_id,
     action: 'APPLICATION_CREATED',
@@ -52,7 +53,7 @@ export async function createApplication(
 }
 
 export async function updateApplicationStatus(applicationId: string, status: ApplicationStatus) {
-  await requireRole('admin', 'hr_manager', 'recruiter');
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
 
   const supabase = await createClient();
   const { data: previous } = await supabase.from('applications').select('status').eq('id', applicationId).single();
@@ -67,6 +68,7 @@ export async function updateApplicationStatus(applicationId: string, status: App
   if (error) throw error;
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: applicationId,
     candidate_id: application.candidate_id,
     action: 'STATUS_CHANGED',
@@ -116,6 +118,7 @@ export async function submitFinalReviewDecision(applicationId: string, decision:
   if (error) throw error;
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: applicationId,
     candidate_id: application.candidate_id,
     action: 'HR_FINAL_REVIEW_DECISION',

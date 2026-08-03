@@ -18,7 +18,7 @@ export async function createCandidate(
   _prevState: CandidateFormState,
   formData: FormData
 ): Promise<CandidateFormState> {
-  await requireRole('admin', 'hr_manager', 'recruiter');
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
 
   const full_name = String(formData.get('full_name') ?? '').trim();
   const email = String(formData.get('email') ?? '').trim();
@@ -28,7 +28,12 @@ export async function createCandidate(
   }
 
   const supabase = await createClient();
-  const { data: existing } = await supabase.from('candidates').select('id').eq('email', email).maybeSingle();
+  const { data: existing } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('email', email)
+    .eq('organization_id', user.profile.organization_id)
+    .maybeSingle();
   if (existing) {
     return { error: 'DUPLICATE_CANDIDATE: a candidate with this email already exists.' };
   }
@@ -36,6 +41,7 @@ export async function createCandidate(
   const { data, error } = await supabase
     .from('candidates')
     .insert({
+      organization_id: user.profile.organization_id,
       full_name,
       email,
       phone: String(formData.get('phone') ?? '').trim() || null,
@@ -63,7 +69,7 @@ export async function createCandidate(
 // (resume, offer PDFs) aren't covered by DB cascade, so they're cleaned up
 // explicitly first.
 export async function deleteCandidate(candidateId: string) {
-  await requireRole('admin', 'hr_manager', 'recruiter');
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
   const supabase = await createClient();
 
   const { data: candidate } = await supabase
@@ -81,6 +87,7 @@ export async function deleteCandidate(candidateId: string) {
   if (offerPaths.length) await supabase.storage.from('offer-letters').remove(offerPaths);
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     candidate_id: candidateId,
     action: 'CANDIDATE_DELETED',
     status: 'success',

@@ -1,6 +1,10 @@
 // Realistic demo data for the HireFlow AI dashboard: 5 jobs, ~50 candidates,
 // applications spread across statuses/sources, and screening scores where applicable.
-// Run with: npm run seed  (requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
+// Multi-tenant: seeds into ONE organization. Sign up first (which creates your
+// own organization), then run either:
+//   npm run seed -- <organization_id>
+//   npm run seed                        (seeds into whichever org signed up first)
+// Requires SUPABASE_SERVICE_ROLE_KEY in .env.local.
 
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
@@ -16,6 +20,27 @@ if (!supabaseUrl || !serviceRoleKey) {
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+
+async function resolveOrganizationId(): Promise<string> {
+  const argId = process.argv[2];
+  if (argId) {
+    const { data, error } = await supabase.from('organizations').select('id, name').eq('id', argId).single();
+    if (error || !data) {
+      console.error(`No organization found with id ${argId}`);
+      process.exit(1);
+    }
+    console.log(`Seeding into organization: ${data.name} (${data.id})`);
+    return data.id;
+  }
+
+  const { data, error } = await supabase.from('organizations').select('id, name').order('created_at').limit(1).single();
+  if (error || !data) {
+    console.error('No organizations exist yet — sign up in the app first (it creates your organization), then re-run this script.');
+    process.exit(1);
+  }
+  console.log(`No organization id given — seeding into the first one found: ${data.name} (${data.id})`);
+  return data.id;
+}
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -131,8 +156,11 @@ const CITIES = ['Karachi, PK', 'Lahore, PK', 'Islamabad, PK', 'Remote', 'Dubai, 
 const SOURCES = ['linkedin', 'indeed', 'company_website', 'referral', 'recruiter', 'job_board', 'social_media', 'other'] as const;
 
 async function main() {
+  const organizationId = await resolveOrganizationId();
+
   console.log('Seeding jobs...');
-  const { data: jobs, error: jobsError } = await supabase.from('jobs').insert(JOBS).select('id, title, required_skills');
+  const jobsWithOrg = JOBS.map((j) => ({ ...j, organization_id: organizationId }));
+  const { data: jobs, error: jobsError } = await supabase.from('jobs').insert(jobsWithOrg).select('id, title, required_skills');
   if (jobsError) throw jobsError;
   console.log(`  created ${jobs.length} jobs`);
 
@@ -141,6 +169,7 @@ async function main() {
     const first = pick(FIRST_NAMES);
     const last = pick(LAST_NAMES);
     return {
+      organization_id: organizationId,
       full_name: `${first} ${last}`,
       email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@example.com`,
       phone: `+92 3${randInt(10, 99)} ${randInt(1000000, 9999999)}`,
@@ -193,6 +222,7 @@ async function main() {
     const { data: application, error: appError } = await supabase
       .from('applications')
       .insert({
+        organization_id: organizationId,
         job_id: job.id,
         candidate_id: candidate.id,
         status,
@@ -222,6 +252,7 @@ async function main() {
       const weighted = Math.round(skills * 0.35 + experience * 0.25 + technical * 0.2 + education * 0.1 + portfolio * 0.1);
 
       await supabase.from('candidate_scores').insert({
+        organization_id: organizationId,
         application_id: application.id,
         skills_score: skills,
         experience_score: experience,
@@ -241,6 +272,7 @@ async function main() {
     }
 
     await supabase.from('automation_logs').insert({
+      organization_id: organizationId,
       application_id: application.id,
       candidate_id: candidate.id,
       action: 'APPLICATION_CREATED',

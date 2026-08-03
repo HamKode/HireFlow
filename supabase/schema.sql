@@ -1,6 +1,11 @@
 -- HireFlow AI — Database Schema
 -- Run this once in the Supabase SQL editor on a fresh project.
 -- Supabase enables pgcrypto by default, so gen_random_uuid() is available.
+--
+-- Multi-tenant: every organization (company) that signs up gets fully
+-- isolated data. Every table below carries organization_id, every RLS
+-- policy filters by it via current_organization_id(), and every signup
+-- creates its own new organization (see handle_new_user()).
 
 -- =========================================================================
 -- ENUM TYPES
@@ -47,28 +52,54 @@ end;
 $$ language plpgsql;
 
 -- =========================================================================
--- PROFILES (extends auth.users, adds role)
+-- ORGANIZATIONS (tenants)
+-- =========================================================================
+
+create table public.organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger trg_organizations_updated_at before update on public.organizations
+  for each row execute function public.set_updated_at();
+
+-- =========================================================================
+-- PROFILES (extends auth.users, adds role + tenant)
 -- =========================================================================
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   full_name text not null,
-  role user_role not null default 'recruiter',
+  role user_role not null default 'admin',
   avatar_url text,
   phone text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+create index idx_profiles_organization on public.profiles(organization_id);
+
 create trigger trg_profiles_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
 
--- Auto-create a profile row whenever a new auth user signs up.
+-- Every signup creates its own new organization and becomes its admin.
+-- Pass a company name via signUp's options.data.company_name; falls back
+-- to a generic name if omitted.
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  new_org_id uuid;
 begin
-  insert into public.profiles (id, full_name, role)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email), 'recruiter');
+  insert into public.organizations (name)
+  values (coalesce(new.raw_user_meta_data->>'company_name', 'My Company'))
+  returning id into new_org_id;
+
+  insert into public.profiles (id, organization_id, full_name, role)
+  values (new.id, new_org_id, coalesce(new.raw_user_meta_data->>'full_name', new.email), 'admin');
+
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -77,10 +108,15 @@ create trigger trg_on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Role lookup used by RLS policies (security definer to avoid recursive RLS on profiles).
+-- Role/org lookups used by RLS policies (security definer to avoid recursive RLS on profiles).
 create or replace function public.current_role()
 returns user_role as $$
   select role from public.profiles where id = auth.uid();
+$$ language sql stable security definer set search_path = public;
+
+create or replace function public.current_organization_id()
+returns uuid as $$
+  select organization_id from public.profiles where id = auth.uid();
 $$ language sql stable security definer set search_path = public;
 
 -- =========================================================================
@@ -89,6 +125,7 @@ $$ language sql stable security definer set search_path = public;
 
 create table public.jobs (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   title text not null,
   department text,
   location text,
@@ -113,6 +150,7 @@ create table public.jobs (
   updated_at timestamptz not null default now()
 );
 
+create index idx_jobs_organization on public.jobs(organization_id);
 create index idx_jobs_status on public.jobs(status);
 create index idx_jobs_hiring_manager on public.jobs(hiring_manager_id);
 
@@ -125,6 +163,7 @@ create trigger trg_jobs_updated_at before update on public.jobs
 
 create table public.candidates (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   full_name text not null,
   email text not null,
   phone text,
@@ -145,9 +184,12 @@ create table public.candidates (
   is_duplicate_of uuid references public.candidates(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (email)
+  -- The same person can be a candidate at multiple companies independently,
+  -- so uniqueness is scoped per-tenant, not global.
+  unique (organization_id, email)
 );
 
+create index idx_candidates_organization on public.candidates(organization_id);
 create index idx_candidates_email on public.candidates(email);
 create index idx_candidates_phone on public.candidates(phone);
 create index idx_candidates_linkedin on public.candidates(linkedin_url);
@@ -161,6 +203,7 @@ create trigger trg_candidates_updated_at before update on public.candidates
 
 create table public.applications (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   job_id uuid not null references public.jobs(id) on delete cascade,
   candidate_id uuid not null references public.candidates(id) on delete cascade,
   status application_status not null default 'applied',
@@ -175,6 +218,7 @@ create table public.applications (
   unique (job_id, candidate_id)
 );
 
+create index idx_applications_organization on public.applications(organization_id);
 create index idx_applications_job on public.applications(job_id);
 create index idx_applications_candidate on public.applications(candidate_id);
 create index idx_applications_status on public.applications(status);
@@ -189,6 +233,7 @@ create trigger trg_applications_updated_at before update on public.applications
 
 create table public.candidate_scores (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   application_id uuid not null references public.applications(id) on delete cascade,
   skills_score numeric(5,2),
   experience_score numeric(5,2),
@@ -210,6 +255,7 @@ create table public.candidate_scores (
   unique (application_id)
 );
 
+create index idx_candidate_scores_organization on public.candidate_scores(organization_id);
 create index idx_candidate_scores_application on public.candidate_scores(application_id);
 
 create trigger trg_candidate_scores_updated_at before update on public.candidate_scores
@@ -221,6 +267,7 @@ create trigger trg_candidate_scores_updated_at before update on public.candidate
 
 create table public.interviews (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   application_id uuid not null references public.applications(id) on delete cascade,
   interviewer_id uuid references public.profiles(id),
   interview_type interview_type not null default 'technical',
@@ -233,6 +280,7 @@ create table public.interviews (
   updated_at timestamptz not null default now()
 );
 
+create index idx_interviews_organization on public.interviews(organization_id);
 create index idx_interviews_application on public.interviews(application_id);
 create index idx_interviews_interviewer on public.interviews(interviewer_id);
 create index idx_interviews_status on public.interviews(status);
@@ -246,6 +294,7 @@ create trigger trg_interviews_updated_at before update on public.interviews
 
 create table public.interview_feedback (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   interview_id uuid not null references public.interviews(id) on delete cascade,
   interviewer_id uuid references public.profiles(id),
   technical_knowledge int check (technical_knowledge between 1 and 10),
@@ -264,6 +313,7 @@ create table public.interview_feedback (
   unique (interview_id)
 );
 
+create index idx_interview_feedback_organization on public.interview_feedback(organization_id);
 create index idx_interview_feedback_interview on public.interview_feedback(interview_id);
 
 create trigger trg_interview_feedback_updated_at before update on public.interview_feedback
@@ -275,6 +325,7 @@ create trigger trg_interview_feedback_updated_at before update on public.intervi
 
 create table public.offers (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   application_id uuid not null references public.applications(id) on delete cascade,
   candidate_id uuid not null references public.candidates(id) on delete cascade,
   job_id uuid not null references public.jobs(id) on delete cascade,
@@ -293,6 +344,7 @@ create table public.offers (
   updated_at timestamptz not null default now()
 );
 
+create index idx_offers_organization on public.offers(organization_id);
 create index idx_offers_application on public.offers(application_id);
 create index idx_offers_candidate on public.offers(candidate_id);
 create index idx_offers_status on public.offers(status);
@@ -306,6 +358,7 @@ create trigger trg_offers_updated_at before update on public.offers
 
 create table public.onboarding_tasks (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   candidate_id uuid not null references public.candidates(id) on delete cascade,
   offer_id uuid references public.offers(id) on delete set null,
   task_name text not null,
@@ -317,6 +370,7 @@ create table public.onboarding_tasks (
   updated_at timestamptz not null default now()
 );
 
+create index idx_onboarding_tasks_organization on public.onboarding_tasks(organization_id);
 create index idx_onboarding_tasks_candidate on public.onboarding_tasks(candidate_id);
 create index idx_onboarding_tasks_status on public.onboarding_tasks(status);
 
@@ -329,6 +383,7 @@ create trigger trg_onboarding_tasks_updated_at before update on public.onboardin
 
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   user_id uuid references public.profiles(id) on delete cascade,
   channel notification_channel not null default 'dashboard',
   title text not null,
@@ -338,6 +393,7 @@ create table public.notifications (
   created_at timestamptz not null default now()
 );
 
+create index idx_notifications_organization on public.notifications(organization_id);
 create index idx_notifications_user on public.notifications(user_id);
 create index idx_notifications_unread on public.notifications(user_id, is_read);
 
@@ -347,6 +403,9 @@ create index idx_notifications_unread on public.notifications(user_id, is_read);
 
 create table public.automation_logs (
   id uuid primary key default gen_random_uuid(),
+  -- Nullable + ON DELETE SET NULL (like candidate_id/application_id below):
+  -- the audit trail should outlive the tenant record it was about.
+  organization_id uuid references public.organizations(id) on delete set null,
   candidate_id uuid references public.candidates(id) on delete set null,
   application_id uuid references public.applications(id) on delete set null,
   action text not null,
@@ -357,19 +416,23 @@ create table public.automation_logs (
   created_at timestamptz not null default now()
 );
 
+create index idx_automation_logs_organization on public.automation_logs(organization_id);
 create index idx_automation_logs_application on public.automation_logs(application_id);
 create index idx_automation_logs_candidate on public.automation_logs(candidate_id);
 create index idx_automation_logs_created on public.automation_logs(created_at desc);
 
 -- =========================================================================
--- APP_SETTINGS (single row — admin-configurable company/scoring/interview defaults)
+-- APP_SETTINGS (one row per organization — admin-configurable defaults)
 -- =========================================================================
 
 create table public.app_settings (
   id uuid primary key default gen_random_uuid(),
-  company_name text not null default 'HireFlow AI',
+  organization_id uuid not null unique references public.organizations(id) on delete cascade,
   default_scoring_weights jsonb not null default '{"skills":35,"experience":25,"technical":20,"education":10,"portfolio":10}',
   default_interview_duration_minutes int not null default 45,
+  -- Optional per-org override of the global MAKE_APPLICATION_WEBHOOK_URL env
+  -- var, for tenants who wire up their own Make.com scenario.
+  make_webhook_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -377,12 +440,24 @@ create table public.app_settings (
 create trigger trg_app_settings_updated_at before update on public.app_settings
   for each row execute function public.set_updated_at();
 
-insert into public.app_settings (company_name) values ('HireFlow AI');
+-- Every new organization gets a default settings row.
+create or replace function public.handle_new_organization()
+returns trigger as $$
+begin
+  insert into public.app_settings (organization_id) values (new.id);
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+create trigger trg_on_organization_created
+  after insert on public.organizations
+  for each row execute function public.handle_new_organization();
 
 -- =========================================================================
 -- ROW LEVEL SECURITY
 -- =========================================================================
 
+alter table public.organizations enable row level security;
 alter table public.profiles enable row level security;
 alter table public.jobs enable row level security;
 alter table public.candidates enable row level security;
@@ -396,20 +471,28 @@ alter table public.notifications enable row level security;
 alter table public.automation_logs enable row level security;
 alter table public.app_settings enable row level security;
 
--- profiles: everyone signed in can read profiles (needed for assignee pickers); only admins can change roles.
-create policy "profiles_select_all" on public.profiles for select using (auth.role() = 'authenticated');
-create policy "profiles_update_self" on public.profiles for update using (id = auth.uid());
-create policy "profiles_admin_all" on public.profiles for all using (public.current_role() = 'admin');
+-- organizations: members read their own; admins can update their own (e.g. rename).
+create policy "organizations_read_own" on public.organizations for select
+  using (id = public.current_organization_id());
+create policy "organizations_admin_update_own" on public.organizations for update
+  using (public.current_role() = 'admin' and id = public.current_organization_id());
 
--- jobs: admin/hr_manager/recruiter manage all jobs; hiring_manager sees/edits only their assigned jobs; interviewer read-only on published jobs.
+-- profiles: everyone signed in can read profiles within their own org (assignee pickers); only admins change roles.
+create policy "profiles_select_own_org" on public.profiles for select
+  using (organization_id = public.current_organization_id());
+create policy "profiles_update_self" on public.profiles for update using (id = auth.uid());
+create policy "profiles_admin_all" on public.profiles for all
+  using (public.current_role() = 'admin' and organization_id = public.current_organization_id());
+
+-- jobs: admin/hr_manager/recruiter manage all jobs in their org; hiring_manager sees/edits only their assigned jobs; interviewer read-only on published jobs.
 create policy "jobs_full_access" on public.jobs for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "jobs_hiring_manager_own" on public.jobs for select
-  using (public.current_role() = 'hiring_manager' and hiring_manager_id = auth.uid());
+  using (public.current_role() = 'hiring_manager' and hiring_manager_id = auth.uid() and organization_id = public.current_organization_id());
 create policy "jobs_hiring_manager_update_own" on public.jobs for update
-  using (public.current_role() = 'hiring_manager' and hiring_manager_id = auth.uid());
+  using (public.current_role() = 'hiring_manager' and hiring_manager_id = auth.uid() and organization_id = public.current_organization_id());
 create policy "jobs_interviewer_read_published" on public.jobs for select
-  using (public.current_role() = 'interviewer' and status = 'published');
+  using (public.current_role() = 'interviewer' and status = 'published' and organization_id = public.current_organization_id());
 
 -- Helper functions (SECURITY DEFINER) that let policies on applications/interviews/candidates/
 -- candidate_scores check each other's data WITHOUT re-entering each other's RLS policies.
@@ -428,12 +511,13 @@ returns setof uuid as $$
   select interviewer_id from public.interviews where application_id = app_id and interviewer_id is not null;
 $$ language sql stable security definer set search_path = public;
 
--- candidates: admin/hr_manager/recruiter full access; hiring_manager/interviewer read-only via their applications (checked at application level, candidates readable if linked).
+-- candidates: admin/hr_manager/recruiter full access within their org; hiring_manager/interviewer read-only via their applications.
 create policy "candidates_full_access" on public.candidates for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "candidates_linked_read" on public.candidates for select
   using (
     public.current_role() in ('hiring_manager', 'interviewer')
+    and organization_id = public.current_organization_id()
     and exists (
       select 1 from public.applications a
       where a.candidate_id = candidates.id
@@ -442,71 +526,79 @@ create policy "candidates_linked_read" on public.candidates for select
     )
   );
 
--- applications: admin/hr_manager/recruiter full access; hiring_manager sees applications for their jobs; interviewer sees applications they interview for.
+-- applications: admin/hr_manager/recruiter full access within their org; hiring_manager sees applications for their jobs; interviewer sees applications they interview for.
 create policy "applications_full_access" on public.applications for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "applications_hiring_manager_read" on public.applications for select
   using (
     public.current_role() = 'hiring_manager'
+    and organization_id = public.current_organization_id()
     and public.application_job_hiring_manager(applications.id) = auth.uid()
   );
 create policy "applications_interviewer_read" on public.applications for select
   using (
     public.current_role() = 'interviewer'
+    and organization_id = public.current_organization_id()
     and auth.uid() in (select public.application_interviewer_ids(applications.id))
   );
 
 -- candidate_scores: same visibility as applications; only recruiting roles can write (AI/backend writes via service role).
 create policy "candidate_scores_full_access" on public.candidate_scores for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "candidate_scores_related_read" on public.candidate_scores for select
   using (
-    public.application_job_hiring_manager(candidate_scores.application_id) = auth.uid()
-    or auth.uid() in (select public.application_interviewer_ids(candidate_scores.application_id))
+    organization_id = public.current_organization_id()
+    and (
+      public.application_job_hiring_manager(candidate_scores.application_id) = auth.uid()
+      or auth.uid() in (select public.application_interviewer_ids(candidate_scores.application_id))
+    )
   );
 
--- interviews: recruiting roles full access; hiring_manager read for their jobs; interviewer sees/updates their own interviews.
+-- interviews: recruiting roles full access within their org; hiring_manager read for their jobs; interviewer sees/updates their own interviews.
 create policy "interviews_full_access" on public.interviews for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "interviews_hiring_manager_read" on public.interviews for select
   using (
     public.current_role() = 'hiring_manager'
+    and organization_id = public.current_organization_id()
     and public.application_job_hiring_manager(interviews.application_id) = auth.uid()
   );
 create policy "interviews_interviewer_own" on public.interviews for select
-  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid());
+  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid() and organization_id = public.current_organization_id());
 create policy "interviews_interviewer_update_own" on public.interviews for update
-  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid());
+  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid() and organization_id = public.current_organization_id());
 
--- interview_feedback: recruiting roles full access; interviewer can create/read/update their own feedback.
+-- interview_feedback: recruiting roles full access within their org; interviewer can create/read/update their own feedback.
 create policy "interview_feedback_full_access" on public.interview_feedback for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "interview_feedback_interviewer_own" on public.interview_feedback for all
-  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid());
+  using (public.current_role() = 'interviewer' and interviewer_id = auth.uid() and organization_id = public.current_organization_id());
 
--- offers: recruiting roles full access only (salary/contract data is sensitive).
+-- offers: recruiting roles full access only within their org (salary/contract data is sensitive).
 create policy "offers_full_access" on public.offers for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 
--- onboarding_tasks: recruiting roles full access; assignee can read/update their own tasks.
+-- onboarding_tasks: recruiting roles full access within their org; assignee can read/update their own tasks.
 create policy "onboarding_tasks_full_access" on public.onboarding_tasks for all
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "onboarding_tasks_assignee" on public.onboarding_tasks for select
-  using (assigned_to = auth.uid());
+  using (assigned_to = auth.uid() and organization_id = public.current_organization_id());
 create policy "onboarding_tasks_assignee_update" on public.onboarding_tasks for update
-  using (assigned_to = auth.uid());
+  using (assigned_to = auth.uid() and organization_id = public.current_organization_id());
 
--- notifications: users see and manage only their own.
+-- notifications: users see and manage only their own, within their org.
 create policy "notifications_own" on public.notifications for all
-  using (user_id = auth.uid());
+  using (user_id = auth.uid() and organization_id = public.current_organization_id());
 
--- automation_logs: recruiting roles + admin read; Make.com writes via the service role,
+-- automation_logs: recruiting roles + admin read within their org; Make.com writes via the service role,
 -- but HR actions taken directly in the dashboard (e.g. manual status changes) also log via this insert policy.
 create policy "automation_logs_read" on public.automation_logs for select
-  using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  using (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 create policy "automation_logs_insert_authenticated" on public.automation_logs for insert
-  with check (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+  with check (public.current_role() in ('admin', 'hr_manager', 'recruiter') and organization_id = public.current_organization_id());
 
--- app_settings: everyone signed in can read (needed for offer letters, job defaults); only admins edit.
-create policy "app_settings_read" on public.app_settings for select using (auth.role() = 'authenticated');
-create policy "app_settings_admin_write" on public.app_settings for all using (public.current_role() = 'admin');
+-- app_settings: everyone signed in can read their own org's settings (needed for offer letters, job defaults); only admins edit.
+create policy "app_settings_read" on public.app_settings for select
+  using (organization_id = public.current_organization_id());
+create policy "app_settings_admin_write" on public.app_settings for all
+  using (public.current_role() = 'admin' and organization_id = public.current_organization_id());

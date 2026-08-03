@@ -32,17 +32,34 @@ export type ApplicationIntakeInput = {
 // what a Make.com "Candidate Application Intake" scenario would orchestrate
 // (see docs/make-scenarios/) but runs natively so the demo works without
 // requiring a Make.com account to be configured.
+//
+// Runs on the service-role client (candidates aren't authenticated users),
+// which bypasses RLS entirely - every insert below explicitly sets
+// organization_id (taken from the job being applied to) since there's no
+// RLS safety net enforcing tenant isolation here.
 export async function processApplicationIntake(supabase: SupabaseClient, input: ApplicationIntakeInput) {
   const email = input.email.trim().toLowerCase();
 
-  const { data: job, error: jobError } = await supabase.from('jobs').select('id, status').eq('id', input.jobId).single();
+  const { data: job, error: jobError } = await supabase
+    .from('jobs')
+    .select('id, status, organization_id')
+    .eq('id', input.jobId)
+    .single();
   if (jobError || !job) {
     throw new IntakeError('Job not found.');
   }
+  const organizationId = job.organization_id as string;
 
-  // Duplicate candidate detection (by email) per project policy — reuse the
-  // existing candidate record instead of creating a new one.
-  const { data: existingCandidate } = await supabase.from('candidates').select('id').eq('email', email).maybeSingle();
+  // Duplicate candidate detection (by email, within this organization only —
+  // the same person can be a candidate at multiple companies independently)
+  // per project policy — reuse the existing candidate record instead of
+  // creating a new one.
+  const { data: existingCandidate } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('email', email)
+    .eq('organization_id', organizationId)
+    .maybeSingle();
 
   let candidateId: string;
   let isDuplicateCandidate = false;
@@ -66,6 +83,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
     const { data: created, error: createError } = await supabase
       .from('candidates')
       .insert({
+        organization_id: organizationId,
         full_name: input.fullName,
         email,
         phone: input.phone || null,
@@ -91,6 +109,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
 
   if (existingApplication) {
     await supabase.from('automation_logs').insert({
+      organization_id: organizationId,
       application_id: existingApplication.id,
       candidate_id: candidateId,
       action: 'DUPLICATE_APPLICATION',
@@ -103,6 +122,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
   const { data: application, error: appError } = await supabase
     .from('applications')
     .insert({
+      organization_id: organizationId,
       job_id: input.jobId,
       candidate_id: candidateId,
       status: 'applied',
@@ -118,6 +138,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
   const applicationId = (application as Application).id;
 
   await supabase.from('automation_logs').insert({
+    organization_id: organizationId,
     application_id: applicationId,
     candidate_id: candidateId,
     action: 'APPLICATION_RECEIVED',
@@ -144,6 +165,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
 
       await supabase.from('candidates').update({ resume_url: path, resume_raw_text: resumeText }).eq('id', candidateId);
       await supabase.from('automation_logs').insert({
+        organization_id: organizationId,
         application_id: applicationId,
         candidate_id: candidateId,
         action: 'RESUME_UPLOADED',
@@ -167,6 +189,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
           })
           .eq('id', candidateId);
         await supabase.from('automation_logs').insert({
+          organization_id: organizationId,
           application_id: applicationId,
           candidate_id: candidateId,
           action: 'RESUME_PARSED',
@@ -175,6 +198,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
         });
       } else {
         await supabase.from('automation_logs').insert({
+          organization_id: organizationId,
           application_id: applicationId,
           candidate_id: candidateId,
           action: 'RESUME_PARSE_FAILED',
@@ -185,6 +209,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
       }
     } catch (err) {
       await supabase.from('automation_logs').insert({
+        organization_id: organizationId,
         application_id: applicationId,
         candidate_id: candidateId,
         action: 'RESUME_UPLOAD_FAILED',
@@ -203,6 +228,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
     const result = await runResumeScreening(supabase, applicationId);
     await supabase.from('applications').update({ status: 'hr_review' }).eq('id', applicationId);
     await supabase.from('automation_logs').insert({
+      organization_id: organizationId,
       application_id: applicationId,
       candidate_id: candidateId,
       action: 'CANDIDATE_ROUTED',
@@ -211,6 +237,7 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
       payload: { routing_decision: result.routingDecision, weighted_final_score: result.weightedScore },
     });
     await notifyRecruitingTeam(supabase, {
+      organizationId,
       title: 'Candidate needs HR review',
       message: `${input.fullName} scored ${result.weightedScore} (${result.routingDecision.replace('_', ' ')} suggested).`,
       relatedApplicationId: applicationId,

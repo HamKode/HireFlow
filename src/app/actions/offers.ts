@@ -63,6 +63,7 @@ export async function createOffer(
   const { data: offer, error: offerError } = await supabase
     .from('offers')
     .insert({
+      organization_id: user.profile.organization_id,
       application_id: applicationId,
       candidate_id: candidate.id,
       job_id: job.id,
@@ -81,6 +82,7 @@ export async function createOffer(
   if (offerError || !offer) return { error: offerError?.message ?? 'Failed to create offer.' };
 
   await supabase.from('automation_logs').insert({
+    organization_id: user.profile.organization_id,
     application_id: applicationId,
     candidate_id: candidate.id,
     action: 'OFFER_GENERATED',
@@ -101,7 +103,7 @@ export async function sendOffer(offerId: string) {
     .from('offers')
     .update({ status: 'sent' })
     .eq('id', offerId)
-    .select('application_id, candidate_id')
+    .select('organization_id, application_id, candidate_id')
     .single();
   if (error) throw error;
 
@@ -114,6 +116,7 @@ export async function sendOffer(offerId: string) {
     .single();
 
   await supabase.from('automation_logs').insert({
+    organization_id: offer.organization_id,
     application_id: offer.application_id,
     candidate_id: offer.candidate_id,
     action: 'OFFER_SENT',
@@ -157,11 +160,12 @@ export async function applyOfferSigned(
     .from('offers')
     .update({ status: 'signed', signed_at: new Date().toISOString() })
     .eq('id', offerId)
-    .select('application_id, candidate_id')
+    .select('organization_id, application_id, candidate_id')
     .single();
   if (error) throw error;
 
   await supabase.from('automation_logs').insert({
+    organization_id: offer.organization_id,
     application_id: offer.application_id,
     candidate_id: offer.candidate_id,
     action: 'OFFER_SIGNED',
@@ -199,12 +203,14 @@ export async function applyOfferSigned(
     .eq('id', offer.candidate_id)
     .single();
   await notifyRecruitingTeam(supabase, {
+    organizationId: offer.organization_id,
     title: 'Offer signed — candidate hired',
     message: `${hiredCandidate?.full_name ?? 'A candidate'} signed their offer. Onboarding checklist created.`,
     relatedApplicationId: offer.application_id,
   });
 
   await supabase.from('automation_logs').insert({
+    organization_id: offer.organization_id,
     application_id: offer.application_id,
     candidate_id: offer.candidate_id,
     action: 'CANDIDATE_HIRED',
@@ -212,9 +218,10 @@ export async function applyOfferSigned(
     source,
   });
 
-  await createDefaultOnboardingTasks(supabase, offer.candidate_id, offerId);
+  await createDefaultOnboardingTasks(supabase, offer.organization_id, offer.candidate_id, offerId);
 
   await supabase.from('automation_logs').insert({
+    organization_id: offer.organization_id,
     application_id: offer.application_id,
     candidate_id: offer.candidate_id,
     action: 'ONBOARDING_TASKS_CREATED',

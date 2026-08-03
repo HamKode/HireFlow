@@ -9,7 +9,7 @@ const inputClass =
 const labelClass = 'text-sm font-medium';
 
 export function SettingsForm({ settings }: { settings: AppSettings }) {
-  const action = updateAppSettings.bind(null, settings.id) as (
+  const action = updateAppSettings.bind(null, settings.id, settings.organization_id) as (
     state: SettingsFormState,
     formData: FormData
   ) => Promise<SettingsFormState>;
@@ -34,6 +34,23 @@ export function SettingsForm({ settings }: { settings: AppSettings }) {
           name="default_interview_duration_minutes"
           type="number"
           defaultValue={settings.default_interview_duration_minutes}
+          className={inputClass}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className={labelClass} htmlFor="make_webhook_url">
+          Make.com webhook URL
+        </label>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          Optional — connects your own Make.com scenario for candidate emails and reminders. Leave blank to use
+          the platform default.
+        </p>
+        <input
+          id="make_webhook_url"
+          name="make_webhook_url"
+          placeholder="https://hook.eu1.make.com/..."
+          defaultValue={settings.make_webhook_url ?? ''}
           className={inputClass}
         />
       </div>

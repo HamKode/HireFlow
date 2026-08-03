@@ -8,6 +8,7 @@ export type SettingsFormState = { error?: string; success?: boolean } | undefine
 
 export async function updateAppSettings(
   settingsId: string,
+  organizationId: string,
   _prevState: SettingsFormState,
   formData: FormData
 ): Promise<SettingsFormState> {
@@ -27,12 +28,19 @@ export async function updateAppSettings(
   };
 
   const supabase = await createClient();
+
+  const { error: orgError } = await supabase
+    .from('organizations')
+    .update({ name: String(formData.get('company_name') ?? 'My Company').trim() || 'My Company' })
+    .eq('id', organizationId);
+  if (orgError) return { error: orgError.message };
+
   const { error } = await supabase
     .from('app_settings')
     .update({
-      company_name: String(formData.get('company_name') ?? 'HireFlow AI').trim() || 'HireFlow AI',
       default_scoring_weights: weights,
       default_interview_duration_minutes: num('default_interview_duration_minutes', 45),
+      make_webhook_url: String(formData.get('make_webhook_url') ?? '').trim() || null,
     })
     .eq('id', settingsId);
 

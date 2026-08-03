@@ -26,8 +26,16 @@ export type OnboardingTaskStatus = 'pending' | 'in_progress' | 'completed' | 'bl
 export type NotificationChannel = 'email' | 'slack' | 'dashboard' | 'sms';
 export type AutomationLogStatus = 'success' | 'failure' | 'retrying';
 
+export interface Organization {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
+  organization_id: string;
   full_name: string;
   role: UserRole;
   avatar_url: string | null;
@@ -38,6 +46,7 @@ export interface Profile {
 
 export interface Job {
   id: string;
+  organization_id: string;
   title: string;
   department: string | null;
   location: string | null;
@@ -64,6 +73,7 @@ export interface Job {
 
 export interface Candidate {
   id: string;
+  organization_id: string;
   full_name: string;
   email: string;
   phone: string | null;
@@ -88,6 +98,7 @@ export interface Candidate {
 
 export interface Application {
   id: string;
+  organization_id: string;
   job_id: string;
   candidate_id: string;
   status: ApplicationStatus;
@@ -103,6 +114,7 @@ export interface Application {
 
 export interface CandidateScore {
   id: string;
+  organization_id: string;
   application_id: string;
   skills_score: number | null;
   experience_score: number | null;
@@ -125,6 +137,7 @@ export interface CandidateScore {
 
 export interface Interview {
   id: string;
+  organization_id: string;
   application_id: string;
   interviewer_id: string | null;
   interview_type: InterviewType;
@@ -139,6 +152,7 @@ export interface Interview {
 
 export interface InterviewFeedback {
   id: string;
+  organization_id: string;
   interview_id: string;
   interviewer_id: string | null;
   technical_knowledge: number | null;
@@ -158,6 +172,7 @@ export interface InterviewFeedback {
 
 export interface Offer {
   id: string;
+  organization_id: string;
   application_id: string;
   candidate_id: string;
   job_id: string;
@@ -178,6 +193,7 @@ export interface Offer {
 
 export interface OnboardingTask {
   id: string;
+  organization_id: string;
   candidate_id: string;
   offer_id: string | null;
   task_name: string;
@@ -191,6 +207,7 @@ export interface OnboardingTask {
 
 export interface Notification {
   id: string;
+  organization_id: string;
   user_id: string | null;
   channel: NotificationChannel;
   title: string;
@@ -202,6 +219,7 @@ export interface Notification {
 
 export interface AutomationLog {
   id: string;
+  organization_id: string | null;
   candidate_id: string | null;
   application_id: string | null;
   action: string;

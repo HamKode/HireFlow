@@ -24,11 +24,12 @@ export async function login(_prevState: AuthFormState, formData: FormData): Prom
 }
 
 export async function signup(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const companyName = String(formData.get('company_name') ?? '').trim();
   const fullName = String(formData.get('full_name') ?? '').trim();
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
 
-  if (!fullName || !email || !password) {
+  if (!companyName || !fullName || !email || !password) {
     return { error: 'All fields are required.' };
   }
   if (password.length < 8) {
@@ -36,10 +37,13 @@ export async function signup(_prevState: AuthFormState, formData: FormData): Pro
   }
 
   const supabase = await createClient();
+  // handle_new_user() (a DB trigger) reads company_name/full_name from this
+  // metadata to create a brand-new organization and make this user its admin
+  // — every signup gets its own fully isolated workspace.
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: { data: { full_name: fullName, company_name: companyName } },
   });
 
   if (error) {

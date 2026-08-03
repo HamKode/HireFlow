@@ -29,3 +29,8 @@ Nothing required — the `/apply/[jobId]` page, resume upload, AI parsing/screen
 ## Phase 8 — Deployment (optional)
 1. Free account at https://vercel.com.
 2. Import this GitHub repo, add the same env vars from `.env.local` in the Vercel project settings.
+
+## Phase 9 — Multi-tenancy
+Nothing to provision — this is a schema change, not a new external account. If you're setting up fresh, `supabase/schema.sql` already includes it. If you're upgrading an existing project, run the migration SQL from the Phase 9 conversation once in the SQL editor (adds `organizations`, backfills existing data into one default org, rewrites RLS).
+
+Sign up in the app to create your own organization (you become its admin). To seed demo data into a specific organization: `npm run seed -- <organization_id>` (or just `npm run seed` to seed into whichever organization was created first).

@@ -23,12 +23,20 @@ export async function POST(request: Request) {
   const supabase = createServiceRoleClient();
   const { data: interview, error } = await supabase
     .from('interviews')
-    .select('id, application:applications(job:jobs(*), candidate:candidates(*)), interview_feedback(*)')
+    .select(
+      'id, organization_id, application_id, application:applications(job:jobs(*), candidate:candidates(*)), interview_feedback(*)'
+    )
     .eq('id', interviewId)
     .single();
 
   if (error || !interview) {
     return NextResponse.json({ error: 'Interview not found.' }, { status: 404 });
+  }
+  // Service role bypasses RLS entirely, so this route must verify tenant
+  // ownership itself — otherwise any signed-in user could pass another
+  // organization's interview_id and get AI processing run against it.
+  if (interview.organization_id !== user.profile.organization_id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   const application = interview.application as unknown as { job: Job; candidate: Candidate };
@@ -79,7 +87,8 @@ export async function POST(request: Request) {
     .eq('interview_id', interviewId);
 
   await supabase.from('automation_logs').insert({
-    application_id: null,
+    organization_id: interview.organization_id,
+    application_id: interview.application_id,
     action: 'AI_INTERVIEW_EVALUATION_COMPLETED',
     status: 'success',
     source: 'ai-service',

@@ -14,7 +14,7 @@ export class ScreeningError extends Error {}
 export async function runResumeScreening(supabase: SupabaseClient, applicationId: string) {
   const { data: application, error: appError } = await supabase
     .from('applications')
-    .select('id, candidate_id, job_id, job:jobs(*), candidate:candidates(*)')
+    .select('id, organization_id, candidate_id, job_id, job:jobs(*), candidate:candidates(*)')
     .eq('id', applicationId)
     .single();
 
@@ -65,6 +65,7 @@ export async function runResumeScreening(supabase: SupabaseClient, applicationId
 
   if (!analysis) {
     await supabase.from('automation_logs').insert({
+      organization_id: application.organization_id,
       application_id: applicationId,
       candidate_id: application.candidate_id,
       action: 'AI_SCREENING_FAILED',
@@ -89,6 +90,7 @@ export async function runResumeScreening(supabase: SupabaseClient, applicationId
 
   const { error: upsertError } = await supabase.from('candidate_scores').upsert(
     {
+      organization_id: application.organization_id,
       application_id: applicationId,
       skills_score: analysis.skills_score,
       experience_score: analysis.experience_score,
@@ -114,6 +116,7 @@ export async function runResumeScreening(supabase: SupabaseClient, applicationId
   }
 
   await supabase.from('automation_logs').insert({
+    organization_id: application.organization_id,
     application_id: applicationId,
     candidate_id: application.candidate_id,
     action: 'AI_SCREENING_COMPLETED',
