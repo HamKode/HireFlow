@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { ScreeningPanel } from '@/components/candidates/screening-panel';
 import { ResumeLink } from '@/components/candidates/resume-link';
 import { FinalReviewActions } from '@/components/applications/final-review-actions';
+import { DeleteCandidateButton } from '@/components/candidates/delete-candidate-button';
 import type { CandidateScore } from '@/lib/supabase/types';
 
 const FINAL_REVIEW_STATUSES = ['interviewed', 'final_review'];
@@ -27,12 +28,15 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
             {[candidate.email, candidate.phone, candidate.location].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <Link
-          href={`/applications/new?candidate=${candidate.id}`}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-        >
-          Link to job
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/applications/new?candidate=${candidate.id}`}
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+          >
+            Link to job
+          </Link>
+          <DeleteCandidateButton candidateId={candidate.id} candidateName={candidate.full_name} />
+        </div>
       </div>
 
       <div className="flex gap-4 text-sm">

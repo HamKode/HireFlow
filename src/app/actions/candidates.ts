@@ -56,6 +56,45 @@ export async function createCandidate(
   redirect(`/candidates/${data.id}`);
 }
 
+// Deletes the candidate and everything that hangs off them (applications,
+// scores, interviews, feedback, offers, onboarding tasks all cascade via FK
+// on the DB side). automation_logs rows survive with candidate_id set to
+// null — the audit trail outlives the record it was about. Storage files
+// (resume, offer PDFs) aren't covered by DB cascade, so they're cleaned up
+// explicitly first.
+export async function deleteCandidate(candidateId: string) {
+  await requireRole('admin', 'hr_manager', 'recruiter');
+  const supabase = await createClient();
+
+  const { data: candidate } = await supabase
+    .from('candidates')
+    .select('full_name, email, resume_url')
+    .eq('id', candidateId)
+    .single();
+
+  const { data: offers } = await supabase.from('offers').select('pdf_url').eq('candidate_id', candidateId);
+
+  const resumePaths = candidate?.resume_url ? [candidate.resume_url] : [];
+  const offerPaths = (offers ?? []).map((o) => o.pdf_url).filter((p): p is string => !!p);
+
+  if (resumePaths.length) await supabase.storage.from('resumes').remove(resumePaths);
+  if (offerPaths.length) await supabase.storage.from('offer-letters').remove(offerPaths);
+
+  await supabase.from('automation_logs').insert({
+    candidate_id: candidateId,
+    action: 'CANDIDATE_DELETED',
+    status: 'success',
+    source: 'dashboard',
+    payload: { full_name: candidate?.full_name, email: candidate?.email },
+  });
+
+  const { error } = await supabase.from('candidates').delete().eq('id', candidateId);
+  if (error) throw error;
+
+  revalidatePath('/candidates');
+  redirect('/candidates');
+}
+
 export async function updateResumeText(candidateId: string, formData: FormData) {
   await requireRole('admin', 'hr_manager', 'recruiter');
   const resumeText = String(formData.get('resume_raw_text') ?? '');

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getDashboardStats } from '@/lib/data/stats';
 
 const CARDS = [
@@ -28,7 +29,11 @@ export default async function DashboardPage() {
         ))}
       </div>
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-        Full charts (applications by source, hiring trends, conversion funnels) land in Phase 7 — Analytics.
+        See the{' '}
+        <Link href="/analytics" className="font-medium text-neutral-900 underline dark:text-white">
+          Analytics
+        </Link>{' '}
+        page for the recruitment funnel, source/status breakdowns, and hiring rates.
       </p>
     </div>
   );

@@ -13,7 +13,7 @@ export default async function AutomationLogsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Automation Logs</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Audit trail of dashboard actions and (from Phase 4 onward) Make.com automation events.
+          Audit trail of every dashboard action, AI operation, and Make.com automation event.
         </p>
       </div>
 
