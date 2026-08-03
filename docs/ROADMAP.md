@@ -18,9 +18,10 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - Claude: centralized AI config, JD generator, resume analysis, structured JSON schemas + validation, deterministic weighted scoring engine, API routes Make.com will call.
 - You: create a free Groq API key at console.groq.com, add `GROQ_API_KEY` to `.env.local`.
 
-## Phase 4 — Make.com Automation (Scenarios 01–05)
-- Claude: documented, importable Make.com blueprints for job description generation, application intake, resume processing + AI screening, candidate scoring, and candidate routing/HR notification.
-- You: create a free Make.com account, import the blueprints, connect your own Supabase/Groq/Gmail credentials inside Make, activate the scenarios.
+## Phase 4 — Application Intake, Resume Processing, Scoring, Routing ✅
+- Claude: public `/apply/[jobId]` page + resume upload (Supabase Storage), deterministic PDF/DOCX/TXT text extraction, AI resume-profile extraction, duplicate detection, AI screening + deterministic scoring, routing to `hr_review` — all running natively (`src/lib/applications/intake.ts`), not through Make.com, since it's fully testable code and Make.com scenarios aren't something I can build or verify myself. Also: signed-URL resume viewing for HR, "copy application link" on published jobs, and a documented Make.com blueprint (`docs/make-scenarios/`) for the one piece that genuinely needs an external account — automated candidate emails via Gmail.
+- You: (optional, for real emails) create a free Make.com account and follow `docs/make-scenarios/01-candidate-communications.md`.
+- Verified: real multipart submission through the actual route end-to-end (resume uploaded to Storage, text extracted, AI profile + screening ran, application moved to `hr_review`, all `automation_logs` steps in correct order), plus duplicate-application handling confirmed.
 
 ## Phase 5 — Interview Loop (Scenarios 06–08)
 - Claude: interview scheduling UI, feedback form, AI interview-question generator, AI evaluation summaries, Make blueprints for scheduling/reminders/feedback.

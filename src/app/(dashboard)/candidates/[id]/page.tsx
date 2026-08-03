@@ -4,6 +4,7 @@ import { getCandidate, getCandidateApplications } from '@/lib/data/candidates';
 import { updateResumeText } from '@/app/actions/candidates';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ScreeningPanel } from '@/components/candidates/screening-panel';
+import { ResumeLink } from '@/components/candidates/resume-link';
 import type { CandidateScore } from '@/lib/supabase/types';
 
 export default async function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,9 +73,13 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
       <section>
         <h2 className="mb-1.5 text-sm font-semibold">Resume text</h2>
         <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-          Paste resume text here so AI screening has something to analyze. Automated upload + extraction arrives in
-          Phase 4.
+          Populated automatically when a candidate applies with a resume file, or paste text manually below.
         </p>
+        {candidate.resume_url && (
+          <div className="mb-3">
+            <ResumeLink path={candidate.resume_url} />
+          </div>
+        )}
         <form action={updateResumeText.bind(null, candidate.id)} className="space-y-2">
           <textarea
             name="resume_raw_text"

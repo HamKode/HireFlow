@@ -39,6 +39,28 @@ Preferred skills: ${input.preferredSkills?.join(', ') || 'Not specified'}
   return { system, user };
 }
 
+export function resumeExtractionPrompt(resumeText: string) {
+  const system = `You extract structured career information from resume text for an HR system.
+${FAIRNESS_GUARDRAIL}
+Only extract what the text actually supports — use null or an empty array rather than guessing.
+Do not extract name, email, phone, or location — those come from the application form, not the resume.
+Respond with a single JSON object matching exactly this shape (no markdown, no extra keys):
+{
+  "education": string | null,
+  "years_experience": number | null,
+  "previous_companies": string[],
+  "previous_roles": string[],
+  "technical_skills": string[],
+  "soft_skills": string[],
+  "certifications": string[],
+  "projects": [{ "name": string, "description": string }]
+}`;
+
+  const user = `RESUME TEXT\n${resumeText.slice(0, 12000)}`;
+
+  return { system, user };
+}
+
 export function resumeAnalysisPrompt(input: {
   job: {
     title: string;

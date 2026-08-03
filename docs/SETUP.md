@@ -14,11 +14,13 @@ None of these can be created on your behalf — each needs a real account. All h
 1. Create an API key at https://console.groq.com/keys (free tier).
 2. Add it as `GROQ_API_KEY` in `.env.local`.
 
-## Phase 4 — Make.com
+## Phase 4 — Public application intake
+Nothing required — the `/apply/[jobId]` page, resume upload, AI parsing/screening, and routing all run natively in this app. The `resumes` Supabase Storage bucket was already created programmatically.
+
+**Optional** — real candidate emails via Make.com:
 1. Create a free account at https://make.com.
-2. Import each blueprint from `docs/make-scenarios/` (added in Phase 4).
-3. Inside each scenario, connect your own Supabase (via HTTP module + service role key or the Supabase app), Groq (via HTTP module), and Gmail modules using Make's built-in connection manager — credentials stay inside Make, not in this repo.
-4. Set the webhook URL Make.com gives you as the target this app posts to (documented per-scenario).
+2. Follow `docs/make-scenarios/01-candidate-communications.md` step by step (it's a full walkthrough, not just an import).
+3. Connect Gmail and Supabase inside Make's own connection manager — credentials stay inside Make, not in this repo.
 
 ## Phase 6 — E-signature
 1. Create a free developer account at https://www.docusign.com/developer-center or https://sign.dropbox.com.

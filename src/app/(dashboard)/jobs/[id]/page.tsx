@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getJob, countApplicationsForJob } from '@/lib/data/jobs';
 import { setJobStatus, duplicateJob } from '@/app/actions/jobs';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { CopyApplyLink } from '@/components/jobs/copy-apply-link';
 
 const actionButtonClass =
   'rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900';
@@ -53,6 +54,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <Link href={`/applications?job=${job.id}`} className={actionButtonClass}>
           View applications ({applicationCount})
         </Link>
+        {job.status === 'published' && <CopyApplyLink jobId={job.id} />}
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm">

@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublicRoute = path === '/login' || path === '/signup' || path === '/';
+  const isPublicRoute = path === '/login' || path === '/signup' || path === '/' || path.startsWith('/apply');
 
   // API routes manage their own auth (session cookie or, for Make.com
   // webhooks, an X-Webhook-Secret header) and must return JSON, not an

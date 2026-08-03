@@ -28,3 +28,18 @@ export const ResumeAnalysisSchema = z.object({
   recommendation: z.enum(['shortlist', 'hr_review', 'hold', 'reject']),
 });
 export type ResumeAnalysisResult = z.infer<typeof ResumeAnalysisSchema>;
+
+// Deterministic fields (name/email/phone) are trusted from the application
+// form itself, not re-derived by AI. This schema only covers fields that
+// genuinely require reading unstructured resume text.
+export const ResumeExtractionSchema = z.object({
+  education: z.string().nullable(),
+  years_experience: z.number().min(0).max(60).nullable(),
+  previous_companies: z.array(z.string()),
+  previous_roles: z.array(z.string()),
+  technical_skills: z.array(z.string()),
+  soft_skills: z.array(z.string()),
+  certifications: z.array(z.string()),
+  projects: z.array(z.object({ name: z.string(), description: z.string() })),
+});
+export type ResumeExtractionResult = z.infer<typeof ResumeExtractionSchema>;
