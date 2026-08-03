@@ -392,6 +392,23 @@ create policy "jobs_hiring_manager_update_own" on public.jobs for update
 create policy "jobs_interviewer_read_published" on public.jobs for select
   using (public.current_role() = 'interviewer' and status = 'published');
 
+-- Helper functions (SECURITY DEFINER) that let policies on applications/interviews/candidates/
+-- candidate_scores check each other's data WITHOUT re-entering each other's RLS policies.
+-- Without these, e.g. interviews' policy reading applications + applications' policy reading
+-- interviews creates a direct cycle and Postgres raises "infinite recursion detected".
+create or replace function public.application_job_hiring_manager(app_id uuid)
+returns uuid as $$
+  select j.hiring_manager_id
+  from public.applications a
+  join public.jobs j on j.id = a.job_id
+  where a.id = app_id;
+$$ language sql stable security definer set search_path = public;
+
+create or replace function public.application_interviewer_ids(app_id uuid)
+returns setof uuid as $$
+  select interviewer_id from public.interviews where application_id = app_id and interviewer_id is not null;
+$$ language sql stable security definer set search_path = public;
+
 -- candidates: admin/hr_manager/recruiter full access; hiring_manager/interviewer read-only via their applications (checked at application level, candidates readable if linked).
 create policy "candidates_full_access" on public.candidates for all
   using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
@@ -400,10 +417,9 @@ create policy "candidates_linked_read" on public.candidates for select
     public.current_role() in ('hiring_manager', 'interviewer')
     and exists (
       select 1 from public.applications a
-      join public.jobs j on j.id = a.job_id
       where a.candidate_id = candidates.id
-        and (j.hiring_manager_id = auth.uid()
-             or exists (select 1 from public.interviews i where i.application_id = a.id and i.interviewer_id = auth.uid()))
+        and (public.application_job_hiring_manager(a.id) = auth.uid()
+             or auth.uid() in (select public.application_interviewer_ids(a.id)))
     )
   );
 
@@ -413,12 +429,12 @@ create policy "applications_full_access" on public.applications for all
 create policy "applications_hiring_manager_read" on public.applications for select
   using (
     public.current_role() = 'hiring_manager'
-    and exists (select 1 from public.jobs j where j.id = applications.job_id and j.hiring_manager_id = auth.uid())
+    and public.application_job_hiring_manager(applications.id) = auth.uid()
   );
 create policy "applications_interviewer_read" on public.applications for select
   using (
     public.current_role() = 'interviewer'
-    and exists (select 1 from public.interviews i where i.application_id = applications.id and i.interviewer_id = auth.uid())
+    and auth.uid() in (select public.application_interviewer_ids(applications.id))
   );
 
 -- candidate_scores: same visibility as applications; only recruiting roles can write (AI/backend writes via service role).
@@ -426,14 +442,8 @@ create policy "candidate_scores_full_access" on public.candidate_scores for all
   using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
 create policy "candidate_scores_related_read" on public.candidate_scores for select
   using (
-    exists (
-      select 1 from public.applications a
-      where a.id = candidate_scores.application_id
-        and (
-          exists (select 1 from public.jobs j where j.id = a.job_id and j.hiring_manager_id = auth.uid())
-          or exists (select 1 from public.interviews i where i.application_id = a.id and i.interviewer_id = auth.uid())
-        )
-    )
+    public.application_job_hiring_manager(candidate_scores.application_id) = auth.uid()
+    or auth.uid() in (select public.application_interviewer_ids(candidate_scores.application_id))
   );
 
 -- interviews: recruiting roles full access; hiring_manager read for their jobs; interviewer sees/updates their own interviews.
@@ -442,8 +452,7 @@ create policy "interviews_full_access" on public.interviews for all
 create policy "interviews_hiring_manager_read" on public.interviews for select
   using (
     public.current_role() = 'hiring_manager'
-    and exists (select 1 from public.applications a join public.jobs j on j.id = a.job_id
-                where a.id = interviews.application_id and j.hiring_manager_id = auth.uid())
+    and public.application_job_hiring_manager(interviews.application_id) = auth.uid()
   );
 create policy "interviews_interviewer_own" on public.interviews for select
   using (public.current_role() = 'interviewer' and interviewer_id = auth.uid());
