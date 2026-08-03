@@ -57,7 +57,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
         )}
         {offer.status === 'sent' && (
           <form action={markOfferSigned.bind(null, offer.id)}>
-            <button className={actionButtonClass}>Mark as signed (simulate e-signature)</button>
+            <button className={actionButtonClass}>Confirm signature received</button>
           </form>
         )}
         {offer.status === 'signed' && (
@@ -69,8 +69,8 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
 
       {offer.status === 'sent' && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          In production this happens automatically when the candidate signs via DocuSign/Dropbox Sign (see{' '}
-          <code>docs/make-scenarios/03-e-signature.md</code>) — the button above simulates that for demo purposes.
+          Awaiting the candidate&apos;s signature. Once connected to an e-signature provider, this will
+          be confirmed automatically — until then, confirm manually once they&apos;ve signed.
         </p>
       )}
     </div>

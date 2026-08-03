@@ -9,9 +9,9 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          The AI model and temperature are configured via environment variables (
-          <code>GROQ_MODEL</code>) — a deliberate choice so changing the model never risks
-          exposing an API key through the dashboard.
+          AI provider and model selection are managed at the infrastructure level to keep API
+          credentials secure. The options below control scoring and interview defaults across
+          your recruitment workflow.
         </p>
       </div>
       <SettingsForm settings={settings} />
