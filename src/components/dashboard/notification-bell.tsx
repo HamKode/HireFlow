@@ -54,7 +54,7 @@ export function NotificationBell({
       </button>
 
       {open && (
-        <div className="animate-scale-in absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-2xl border border-ink-200/70 bg-white shadow-xl shadow-ink-900/10 dark:border-white/10 dark:bg-ink-900">
+        <div className="animate-scale-in fixed inset-x-4 top-18 z-50 origin-top rounded-2xl border border-ink-200/70 bg-white shadow-xl shadow-ink-900/10 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 sm:origin-top-right dark:border-white/10 dark:bg-ink-900">
           <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3 dark:border-white/10">
             <p className="text-sm font-semibold text-ink-900 dark:text-white">Notifications</p>
             {unreadCount > 0 && (
