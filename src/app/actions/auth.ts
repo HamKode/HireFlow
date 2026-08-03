@@ -43,7 +43,13 @@ export async function signup(_prevState: AuthFormState, formData: FormData): Pro
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, company_name: companyName } },
+    options: {
+      data: { full_name: fullName, company_name: companyName },
+      // Without this, Supabase falls back to the project's dashboard
+      // "Site URL" (defaults to localhost), so confirmation emails would
+      // link back to a dev server instead of wherever this app is deployed.
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+    },
   });
 
   if (error) {
