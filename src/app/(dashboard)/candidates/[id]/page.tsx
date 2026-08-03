@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCandidate, getCandidateApplications } from '@/lib/data/candidates';
+import { updateResumeText } from '@/app/actions/candidates';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ScreeningPanel } from '@/components/candidates/screening-panel';
+import type { CandidateScore } from '@/lib/supabase/types';
 
 export default async function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -67,33 +70,52 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
       )}
 
       <section>
+        <h2 className="mb-1.5 text-sm font-semibold">Resume text</h2>
+        <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+          Paste resume text here so AI screening has something to analyze. Automated upload + extraction arrives in
+          Phase 4.
+        </p>
+        <form action={updateResumeText.bind(null, candidate.id)} className="space-y-2">
+          <textarea
+            name="resume_raw_text"
+            rows={6}
+            defaultValue={candidate.resume_raw_text ?? ''}
+            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white"
+          />
+          <button
+            type="submit"
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+          >
+            Save resume text
+          </button>
+        </form>
+      </section>
+
+      <section>
         <h2 className="mb-2 text-sm font-semibold">Applications</h2>
         {applications.length === 0 ? (
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Not linked to any job yet.
-          </p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Not linked to any job yet.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
-            <table className="w-full text-sm">
-              <tbody>
-                {applications.map((app) => (
-                  <tr
-                    key={app.id}
-                    className="border-t border-neutral-100 first:border-t-0 dark:border-neutral-800"
-                  >
-                    <td className="px-4 py-3">
+          <div className="space-y-3">
+            {applications.map((app) => {
+              const score = (Array.isArray(app.candidate_scores) ? app.candidate_scores[0] : app.candidate_scores) as
+                | CandidateScore
+                | null;
+              return (
+                <div key={app.id} className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <div>
                       <Link href={`/jobs/${app.job.id}`} className="font-medium hover:underline">
                         {app.job.title}
                       </Link>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400">{app.job.department}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={app.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <StatusBadge status={app.status} />
+                  </div>
+                  <ScreeningPanel applicationId={app.id} score={score} />
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

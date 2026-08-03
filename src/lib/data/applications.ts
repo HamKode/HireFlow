@@ -6,7 +6,7 @@ export async function listApplications(filters?: { jobId?: string; status?: Appl
   const supabase = await createClient();
   let query = supabase
     .from('applications')
-    .select('*, job:jobs(id, title), candidate:candidates(id, full_name, email)')
+    .select('*, job:jobs(id, title), candidate:candidates(id, full_name, email), candidate_scores(weighted_final_score)')
     .order('created_at', { ascending: false });
 
   if (filters?.jobId) query = query.eq('job_id', filters.jobId);

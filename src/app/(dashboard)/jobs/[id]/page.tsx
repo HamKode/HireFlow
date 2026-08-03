@@ -92,7 +92,24 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <p className="whitespace-pre-line text-sm text-neutral-600 dark:text-neutral-400">{job.description}</p>
         </section>
       )}
+
+      <CriteriaList label="Screening criteria" items={job.screening_criteria as string[] | null} />
+      <CriteriaList label="Interview criteria" items={job.interview_criteria as string[] | null} />
     </div>
+  );
+}
+
+function CriteriaList({ label, items }: { label: string; items: string[] | null }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <section>
+      <h2 className="mb-1 text-sm font-semibold">{label}</h2>
+      <ul className="list-inside list-disc space-y-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

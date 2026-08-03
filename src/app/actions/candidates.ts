@@ -55,3 +55,17 @@ export async function createCandidate(
   revalidatePath('/candidates');
   redirect(`/candidates/${data.id}`);
 }
+
+export async function updateResumeText(candidateId: string, formData: FormData) {
+  await requireRole('admin', 'hr_manager', 'recruiter');
+  const resumeText = String(formData.get('resume_raw_text') ?? '');
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('candidates')
+    .update({ resume_raw_text: resumeText || null })
+    .eq('id', candidateId);
+  if (error) throw error;
+
+  revalidatePath(`/candidates/${candidateId}`);
+}

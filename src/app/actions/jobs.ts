@@ -15,6 +15,13 @@ function parseSkills(raw: FormDataEntryValue | null): string[] {
     .filter(Boolean);
 }
 
+function parseLines(raw: FormDataEntryValue | null): string[] {
+  return String(raw ?? '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function jobPayloadFromForm(formData: FormData) {
   return {
     title: String(formData.get('title') ?? '').trim(),
@@ -29,6 +36,8 @@ function jobPayloadFromForm(formData: FormData) {
     preferred_skills: parseSkills(formData.get('preferred_skills')),
     responsibilities: String(formData.get('responsibilities') ?? '').trim() || null,
     description: String(formData.get('description') ?? '').trim() || null,
+    screening_criteria: parseLines(formData.get('screening_criteria')),
+    interview_criteria: parseLines(formData.get('interview_criteria')),
     positions_count: Number(formData.get('positions_count') ?? 1) || 1,
     application_deadline: String(formData.get('application_deadline') ?? '').trim() || null,
   };

@@ -32,6 +32,13 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublicRoute = path === '/login' || path === '/signup' || path === '/';
 
+  // API routes manage their own auth (session cookie or, for Make.com
+  // webhooks, an X-Webhook-Secret header) and must return JSON, not an
+  // HTML redirect to /login.
+  if (path.startsWith('/api/')) {
+    return supabaseResponse;
+  }
+
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';

@@ -54,35 +54,40 @@ export default async function ApplicationsPage({
               <th className="px-4 py-3 font-medium">Candidate</th>
               <th className="px-4 py-3 font-medium">Job</th>
               <th className="px-4 py-3 font-medium">Source</th>
+              <th className="px-4 py-3 font-medium">Score</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
-            {applications.map((app) => (
-              <tr
-                key={app.id}
-                className="border-t border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-              >
-                <td className="px-4 py-3">
-                  <Link href={`/candidates/${app.candidate.id}`} className="font-medium hover:underline">
-                    {app.candidate.full_name}
-                  </Link>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{app.candidate.email}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <Link href={`/jobs/${app.job.id}`} className="hover:underline">
-                    {app.job.title}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{app.source.replace(/_/g, ' ')}</td>
-                <td className="px-4 py-3">
-                  <StatusSelect applicationId={app.id} status={app.status} />
-                </td>
-              </tr>
-            ))}
+            {applications.map((app) => {
+              const score = Array.isArray(app.candidate_scores) ? app.candidate_scores[0] : app.candidate_scores;
+              return (
+                <tr
+                  key={app.id}
+                  className="border-t border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+                >
+                  <td className="px-4 py-3">
+                    <Link href={`/candidates/${app.candidate.id}`} className="font-medium hover:underline">
+                      {app.candidate.full_name}
+                    </Link>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{app.candidate.email}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/jobs/${app.job.id}`} className="hover:underline">
+                      {app.job.title}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{app.source.replace(/_/g, ' ')}</td>
+                  <td className="px-4 py-3 font-medium">{score?.weighted_final_score ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <StatusSelect applicationId={app.id} status={app.status} />
+                  </td>
+                </tr>
+              );
+            })}
             {applications.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
                   No applications yet.
                 </td>
               </tr>
