@@ -83,3 +83,53 @@ export async function updateApplicationStatus(applicationId: string, status: App
 
   revalidatePath('/applications');
 }
+
+export type FinalReviewDecision = 'approve' | 'another_interview' | 'hold' | 'reject';
+
+const DECISION_STATUS: Record<FinalReviewDecision, ApplicationStatus> = {
+  approve: 'offer_pending',
+  another_interview: 'hr_review',
+  hold: 'on_hold',
+  reject: 'rejected',
+};
+
+// HR's final call after interviews - the one place a human explicitly signs
+// off on hire/hold/reject, per the project's human-in-the-loop requirement.
+// Every decision is logged with who made it and, for rejections, why.
+export async function submitFinalReviewDecision(applicationId: string, decision: FinalReviewDecision, reason?: string) {
+  const user = await requireRole('admin', 'hr_manager', 'recruiter');
+
+  const supabase = await createClient();
+  const { data: previous } = await supabase.from('applications').select('status').eq('id', applicationId).single();
+
+  const newStatus = DECISION_STATUS[decision];
+  const { data: application, error } = await supabase
+    .from('applications')
+    .update({
+      status: newStatus,
+      rejected_reason: decision === 'reject' ? reason || null : null,
+    })
+    .eq('id', applicationId)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+
+  await supabase.from('automation_logs').insert({
+    application_id: applicationId,
+    candidate_id: application.candidate_id,
+    action: 'HR_FINAL_REVIEW_DECISION',
+    status: 'success',
+    source: 'dashboard',
+    payload: { decision, new_status: newStatus, decided_by: user.id },
+  });
+
+  await notifyApplicationEvent(supabase, {
+    type: 'UPDATE',
+    record: application as Application,
+    oldRecord: previous ? { status: previous.status } : null,
+  });
+
+  revalidatePath('/applications');
+  revalidatePath(`/candidates/${application.candidate_id}`);
+}

@@ -5,7 +5,11 @@ import { updateResumeText } from '@/app/actions/candidates';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ScreeningPanel } from '@/components/candidates/screening-panel';
 import { ResumeLink } from '@/components/candidates/resume-link';
+import { FinalReviewActions } from '@/components/applications/final-review-actions';
 import type { CandidateScore } from '@/lib/supabase/types';
+
+const FINAL_REVIEW_STATUSES = ['interviewed', 'final_review'];
+const OFFER_STAGE_STATUSES = ['offer_pending', 'offer_sent', 'offer_accepted', 'hired', 'onboarding'];
 
 export default async function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -144,6 +148,26 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
                       Schedule interview
                     </Link>
                   </div>
+
+                  {FINAL_REVIEW_STATUSES.includes(app.status) && <FinalReviewActions applicationId={app.id} />}
+
+                  {OFFER_STAGE_STATUSES.includes(app.status) && (
+                    <div className="rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
+                      <p className="mb-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">Offer</p>
+                      {app.offers.length === 0 ? (
+                        <Link
+                          href={`/offers/new?application=${app.id}`}
+                          className="inline-block rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                        >
+                          Generate offer letter
+                        </Link>
+                      ) : (
+                        <Link href={`/offers/${app.offers[0].id}`} className="text-sm hover:underline">
+                          View offer ({app.offers[0].status})
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

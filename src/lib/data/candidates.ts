@@ -26,7 +26,9 @@ export async function getCandidateApplications(candidateId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('applications')
-    .select('*, job:jobs(id, title, department), candidate_scores(*), interviews(id, status, scheduled_at, interview_type)')
+    .select(
+      '*, job:jobs(id, title, department, employment_type), candidate_scores(*), interviews(id, status, scheduled_at, interview_type), offers(id, status)'
+    )
     .eq('candidate_id', candidateId)
     .order('created_at', { ascending: false });
   if (error) throw error;

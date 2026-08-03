@@ -28,9 +28,10 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - You: (optional) build the reminders scenario in Make.com whenever you want that layer; the dashboard interview flow works fully without it.
 - Verified: both AI features tested against the real Groq API (questions correctly referenced the candidate's specific project, not generic filler); full DB pipeline tested end-to-end (schedule → AI questions → feedback → AI evaluation → status transitions → Make.com notified successfully at each step, confirmed via `automation_logs`).
 
-## Phase 6 — Offer, E-Signature, Onboarding (Scenarios 09–12)
-- Claude: offer letter template + PDF generation endpoint, e-signature webhook receiver, onboarding task automation.
-- You: create a free DocuSign or Dropbox Sign developer account, connect it in Make.com.
+## Phase 6 — HR Final Review, Offer, E-Signature, Onboarding ✅
+- Claude: HR final-review actions (approve/another interview/hold/reject, every decision logged with who and why); approved-static-template offer letter PDF generation (`lib/pdf/offer-letter.ts`, pdf-lib — contractual terms never AI-generated); private `offer-letters` Storage bucket + signed-URL viewing; offer lifecycle (draft → sent → signed) with a "Mark as signed" demo button that runs the exact same cascade a real e-signature webhook would; `/api/webhooks/esignature` receiver; automatic onboarding checklist creation on signature; onboarding board (`/onboarding`) with per-task status; documented Make.com blueprint for real DocuSign/Dropbox Sign integration (`docs/make-scenarios/03-e-signature.md`).
+- You: (optional) a free DocuSign or Dropbox Sign developer account if you want real e-signatures instead of the simulate button — the dashboard flow works fully without it.
+- Verified: PDF generation round-tripped (generated → parsed back → exact text matched); the real `/api/webhooks/esignature` route tested end-to-end against a real seeded application — offer signed, application moved `interviewed → offer_pending → offer_sent → onboarding`, 6 onboarding tasks created, full `automation_logs` chain confirmed correct.
 
 ## Phase 7 — Analytics, Audit Log, Notifications, Settings (Scenarios 13–14)
 - Claude: analytics dashboard (charts), audit log viewer, notification center, admin settings (AI config, scoring weights, templates).
