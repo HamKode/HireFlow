@@ -23,9 +23,10 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - You: built and activated the Make.com scenario yourself, step by step, following `docs/make-scenarios/01-candidate-communications.md` — Supabase + Gmail connections, Router/filter, field mapping, error handler, and turning the scenario ON.
 - Verified: real multipart submission through the actual route end-to-end (resume uploaded to Storage, text extracted, AI profile + screening ran, application moved to `hr_review`, all `automation_logs` steps in correct order), duplicate-application handling confirmed, PDF worker bug found and fixed, Supabase Database Webhooks platform bug found and routed around (app calls Make.com's Custom Webhook directly instead), and the full live scenario tested end-to-end with a real inbox receiving the "Application Received" email.
 
-## Phase 5 — Interview Loop (Scenarios 06–08)
-- Claude: interview scheduling UI, feedback form, AI interview-question generator, AI evaluation summaries, Make blueprints for scheduling/reminders/feedback.
-- You: connect Google Calendar/Gmail inside Make.com.
+## Phase 5 — Interview Loop ✅
+- Claude: interview scheduling UI (`/interviews`), AI interview-question generator (grounded in the candidate's actual resume/projects, not generic), interviewer feedback form, AI evaluation summaries (interviewer's own scores/recommendation stay human — AI only organizes and suggests a next step), status transitions (`interview_scheduled` → `interviewed`) wired into the same Make.com notifier from Phase 4, and a documented Make.com blueprint for 24h/1h reminders + feedback-request follow-ups (`docs/make-scenarios/02-interview-reminders.md`) — genuinely Make.com's job since it's time-based polling, not something Next.js should run.
+- You: (optional) build the reminders scenario in Make.com whenever you want that layer; the dashboard interview flow works fully without it.
+- Verified: both AI features tested against the real Groq API (questions correctly referenced the candidate's specific project, not generic filler); full DB pipeline tested end-to-end (schedule → AI questions → feedback → AI evaluation → status transitions → Make.com notified successfully at each step, confirmed via `automation_logs`).
 
 ## Phase 6 — Offer, E-Signature, Onboarding (Scenarios 09–12)
 - Claude: offer letter template + PDF generation endpoint, e-signature webhook receiver, onboarding task automation.

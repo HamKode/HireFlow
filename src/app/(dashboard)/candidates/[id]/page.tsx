@@ -118,6 +118,32 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
                     <StatusBadge status={app.status} />
                   </div>
                   <ScreeningPanel applicationId={app.id} score={score} />
+
+                  <div className="flex items-center justify-between rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
+                    <div>
+                      <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Interviews</p>
+                      {app.interviews.length === 0 ? (
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">None scheduled</p>
+                      ) : (
+                        <ul className="mt-1 space-y-1 text-sm">
+                          {app.interviews.map((iv: { id: string; status: string; scheduled_at: string; interview_type: string }) => (
+                            <li key={iv.id}>
+                              <Link href={`/interviews/${iv.id}`} className="hover:underline">
+                                {new Date(iv.scheduled_at).toLocaleString()} — {iv.interview_type.replace('_', ' ')} (
+                                {iv.status})
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <Link
+                      href={`/interviews/new?application=${app.id}`}
+                      className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                    >
+                      Schedule interview
+                    </Link>
+                  </div>
                 </div>
               );
             })}
