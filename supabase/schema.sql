@@ -472,6 +472,9 @@ create policy "onboarding_tasks_assignee_update" on public.onboarding_tasks for 
 create policy "notifications_own" on public.notifications for all
   using (user_id = auth.uid());
 
--- automation_logs: recruiting roles + admin read; writes come from the service role (Make.com backend), not end users.
+-- automation_logs: recruiting roles + admin read; Make.com writes via the service role,
+-- but HR actions taken directly in the dashboard (e.g. manual status changes) also log via this insert policy.
 create policy "automation_logs_read" on public.automation_logs for select
   using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+create policy "automation_logs_insert_authenticated" on public.automation_logs for insert
+  with check (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
