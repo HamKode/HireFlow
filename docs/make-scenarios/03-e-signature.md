@@ -4,6 +4,8 @@ Sends the generated offer PDF for real signature via DocuSign or Dropbox Sign, a
 
 **Not required for the demo to work.** The dashboard already has a "Mark as signed (simulate e-signature)" button on a sent offer (`/offers/[id]`) that runs the exact same cascade (`offer_accepted` → `hired` → `onboarding` tasks created) this scenario's webhook would trigger. Build this scenario only if you want a real signing flow.
 
+> **Provider note:** Dropbox Sign now requires a paid API plan even to get a key for test-mode use — there's no free tier to connect it in Make.com anymore. **DocuSign's Developer Sandbox is the better starting point** — it's genuinely free (no card required) and built specifically for this kind of testing. The steps below apply to either provider; swap the module names for DocuSign's equivalents ("eSignature — Create Envelope" instead of "Send Signature Request", etc.). We stopped mid-setup here (Router branch + offer/candidate lookups + PDF-download HTTP module were built; the send-for-signature module was not, once Dropbox Sign's paywall showed up) — pick this back up with DocuSign whenever you want a real signing flow.
+
 ## Part A — Send the offer for signature
 
 Trigger this from the app when HR clicks "Send offer" — the app already POSTs an application-status-changed event to your Candidate Communications webhook (`MAKE_APPLICATION_WEBHOOK_URL`) when `applications.status` becomes `offer_sent`. Add a branch to that *same* scenario (or a new one watching the same webhook):
