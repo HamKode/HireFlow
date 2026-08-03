@@ -4,19 +4,13 @@ Sends automated, respectful candidate emails at key pipeline stages. This is the
 
 ## What triggers it
 
-Set up a **Supabase Database Webhook** (Supabase dashboard → Database → Webhooks → Create a new hook):
-
-| Hook | Table | Events | Condition |
-|---|---|---|---|
-| `applications-status-changed` | `applications` | Insert, Update | none — filter inside Make instead, so you can see all events while building |
-
-Set the webhook URL to the Custom Webhook URL Make.com gives you in step 1 below (Make shows it before you activate the scenario — copy it into Supabase first, send one test row, confirm it arrives, then activate).
+The app itself calls this scenario's Custom Webhook directly — `src/lib/integrations/make.ts`, fired on every application create and status change — instead of a Supabase Database Webhook. (Supabase Database Webhooks hit a platform-side bug on this project — `schema "supabase_functions" does not exist` — so we route around it. See `docs/make-scenarios/README.md` for the full explanation.) `MAKE_APPLICATION_WEBHOOK_URL` in `.env.local` is that webhook's URL.
 
 ## Modules
 
 **1. Custom Webhook** (trigger)
 Name: `01 - Receive Application Status Event`
-Add a webhook, copy its URL into the Supabase Database Webhook above. Supabase's payload shape:
+Add a webhook, copy its URL into `MAKE_APPLICATION_WEBHOOK_URL` in `.env.local`. Payload shape the app sends:
 ```json
 { "type": "INSERT" | "UPDATE", "table": "applications", "record": { ...new row... }, "old_record": { ...previous row or null... } }
 ```
@@ -77,8 +71,8 @@ Keep rejection copy exactly this neutral — no AI-generated reasoning about *wh
 
 ## Setup checklist for you
 
-1. Free Make.com account → new scenario → add the Custom Webhook module, copy its URL.
-2. Supabase dashboard → Database → Webhooks → point a hook at that URL for the `applications` table.
+1. ✅ Free Make.com account → new scenario → Custom Webhook module, URL copied into `MAKE_APPLICATION_WEBHOOK_URL`.
+2. ✅ Confirmed the app can reach it (`automation_logs` shows `MAKE_WEBHOOK_NOTIFIED` / success on a real test application).
 3. In Make, add the Supabase connection (Settings → your project URL + service role key — stored inside Make, never in this repo).
 4. Add the Gmail connection (OAuth, one click).
 5. Build the Router + branches + templates above.

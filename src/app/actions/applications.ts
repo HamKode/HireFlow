@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/auth/dal';
-import type { ApplicationStatus, CandidateSource } from '@/lib/supabase/types';
+import { notifyApplicationEvent } from '@/lib/integrations/make';
+import type { Application, ApplicationStatus, CandidateSource } from '@/lib/supabase/types';
 
 export type ApplicationFormState = { error?: string } | undefined;
 
@@ -26,7 +27,7 @@ export async function createApplication(
   const { data, error } = await supabase
     .from('applications')
     .insert({ job_id, candidate_id, source })
-    .select('id')
+    .select('*')
     .single();
 
   if (error) {
@@ -44,6 +45,8 @@ export async function createApplication(
     source: 'dashboard',
   });
 
+  await notifyApplicationEvent(supabase, { type: 'INSERT', record: data as Application, oldRecord: null });
+
   revalidatePath('/applications');
   redirect('/applications');
 }
@@ -52,11 +55,13 @@ export async function updateApplicationStatus(applicationId: string, status: App
   await requireRole('admin', 'hr_manager', 'recruiter');
 
   const supabase = await createClient();
+  const { data: previous } = await supabase.from('applications').select('status').eq('id', applicationId).single();
+
   const { data: application, error } = await supabase
     .from('applications')
     .update({ status })
     .eq('id', applicationId)
-    .select('candidate_id')
+    .select('*')
     .single();
 
   if (error) throw error;
@@ -68,6 +73,12 @@ export async function updateApplicationStatus(applicationId: string, status: App
     status: 'success',
     source: 'dashboard',
     payload: { new_status: status },
+  });
+
+  await notifyApplicationEvent(supabase, {
+    type: 'UPDATE',
+    record: application as Application,
+    oldRecord: previous ? { status: previous.status } : null,
   });
 
   revalidatePath('/applications');

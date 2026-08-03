@@ -3,7 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractResumeText } from '@/lib/resume/extract-text';
 import { extractResumeProfile } from '@/lib/ai/extraction';
 import { runResumeScreening, ScreeningError } from '@/lib/ai/screening';
-import type { CandidateSource } from '@/lib/supabase/types';
+import { notifyApplicationEvent } from '@/lib/integrations/make';
+import type { CandidateSource, Application } from '@/lib/supabase/types';
 
 export class IntakeError extends Error {}
 
@@ -109,11 +110,11 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
       notice_period: input.noticePeriod || null,
       cover_letter: input.coverLetter || null,
     })
-    .select('id')
+    .select('*')
     .single();
   if (appError || !application) throw new IntakeError(appError?.message ?? 'Failed to create application.');
 
-  const applicationId = application.id as string;
+  const applicationId = (application as Application).id;
 
   await supabase.from('automation_logs').insert({
     application_id: applicationId,
@@ -123,6 +124,8 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
     source: 'apply-form',
     payload: { is_duplicate_candidate: isDuplicateCandidate },
   });
+
+  await notifyApplicationEvent(supabase, { type: 'INSERT', record: application as Application, oldRecord: null });
 
   // Resume upload + deterministic text extraction (no AI involved in getting
   // raw text out of the file itself).
