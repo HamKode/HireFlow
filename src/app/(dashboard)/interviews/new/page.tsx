@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { listInterviewerOptions } from '@/lib/data/interviews';
+import { getAppSettings } from '@/lib/data/settings';
 import { scheduleInterview } from '@/app/actions/interviews';
 import { ScheduleInterviewForm } from '@/components/interviews/schedule-form';
 
@@ -23,7 +24,7 @@ export default async function NewInterviewPage({
 
   const candidate = application.candidate as unknown as { full_name: string };
   const job = application.job as unknown as { title: string };
-  const interviewers = await listInterviewerOptions();
+  const [interviewers, settings] = await Promise.all([listInterviewerOptions(), getAppSettings()]);
 
   return (
     <div className="max-w-lg space-y-6">
@@ -33,7 +34,11 @@ export default async function NewInterviewPage({
           {candidate.full_name} · {job.title}
         </p>
       </div>
-      <ScheduleInterviewForm action={scheduleInterview.bind(null, applicationId)} interviewers={interviewers} />
+      <ScheduleInterviewForm
+        action={scheduleInterview.bind(null, applicationId)}
+        interviewers={interviewers}
+        defaultDurationMinutes={settings.default_interview_duration_minutes}
+      />
     </div>
   );
 }

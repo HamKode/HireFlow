@@ -362,6 +362,24 @@ create index idx_automation_logs_candidate on public.automation_logs(candidate_i
 create index idx_automation_logs_created on public.automation_logs(created_at desc);
 
 -- =========================================================================
+-- APP_SETTINGS (single row — admin-configurable company/scoring/interview defaults)
+-- =========================================================================
+
+create table public.app_settings (
+  id uuid primary key default gen_random_uuid(),
+  company_name text not null default 'HireFlow AI',
+  default_scoring_weights jsonb not null default '{"skills":35,"experience":25,"technical":20,"education":10,"portfolio":10}',
+  default_interview_duration_minutes int not null default 45,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger trg_app_settings_updated_at before update on public.app_settings
+  for each row execute function public.set_updated_at();
+
+insert into public.app_settings (company_name) values ('HireFlow AI');
+
+-- =========================================================================
 -- ROW LEVEL SECURITY
 -- =========================================================================
 
@@ -376,6 +394,7 @@ alter table public.offers enable row level security;
 alter table public.onboarding_tasks enable row level security;
 alter table public.notifications enable row level security;
 alter table public.automation_logs enable row level security;
+alter table public.app_settings enable row level security;
 
 -- profiles: everyone signed in can read profiles (needed for assignee pickers); only admins can change roles.
 create policy "profiles_select_all" on public.profiles for select using (auth.role() = 'authenticated');
@@ -487,3 +506,7 @@ create policy "automation_logs_read" on public.automation_logs for select
   using (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
 create policy "automation_logs_insert_authenticated" on public.automation_logs for insert
   with check (public.current_role() in ('admin', 'hr_manager', 'recruiter'));
+
+-- app_settings: everyone signed in can read (needed for offer letters, job defaults); only admins edit.
+create policy "app_settings_read" on public.app_settings for select using (auth.role() = 'authenticated');
+create policy "app_settings_admin_write" on public.app_settings for all using (public.current_role() = 'admin');

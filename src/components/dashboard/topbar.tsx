@@ -1,4 +1,6 @@
 import { logout } from '@/app/actions/auth';
+import { listMyNotifications, getUnreadNotificationCount } from '@/lib/data/notifications';
+import { NotificationBell } from '@/components/dashboard/notification-bell';
 import type { Profile } from '@/lib/supabase/types';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -9,11 +11,14 @@ const ROLE_LABELS: Record<string, string> = {
   interviewer: 'Interviewer',
 };
 
-export function Topbar({ profile, email }: { profile: Profile; email: string }) {
+export async function Topbar({ profile, email }: { profile: Profile; email: string }) {
+  const [notifications, unreadCount] = await Promise.all([listMyNotifications(), getUnreadNotificationCount()]);
+
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 px-6 dark:border-neutral-800">
       <div />
       <div className="flex items-center gap-4">
+        <NotificationBell initialNotifications={notifications} initialUnreadCount={unreadCount} />
         <div className="text-right">
           <p className="text-sm font-medium leading-tight">{profile.full_name}</p>
           <p className="text-xs leading-tight text-neutral-500 dark:text-neutral-400">

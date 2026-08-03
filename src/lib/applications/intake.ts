@@ -4,6 +4,7 @@ import { extractResumeText } from '@/lib/resume/extract-text';
 import { extractResumeProfile } from '@/lib/ai/extraction';
 import { runResumeScreening, ScreeningError } from '@/lib/ai/screening';
 import { notifyApplicationEvent } from '@/lib/integrations/make';
+import { notifyRecruitingTeam } from '@/lib/notifications/notify';
 import type { CandidateSource, Application } from '@/lib/supabase/types';
 
 export class IntakeError extends Error {}
@@ -208,6 +209,11 @@ export async function processApplicationIntake(supabase: SupabaseClient, input: 
       status: 'success',
       source: 'ai-service',
       payload: { routing_decision: result.routingDecision, weighted_final_score: result.weightedScore },
+    });
+    await notifyRecruitingTeam(supabase, {
+      title: 'Candidate needs HR review',
+      message: `${input.fullName} scored ${result.weightedScore} (${result.routingDecision.replace('_', ' ')} suggested).`,
+      relatedApplicationId: applicationId,
     });
   } catch (err) {
     // Screening logs its own failure; application stays at "screening" so

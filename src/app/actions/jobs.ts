@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/auth/dal';
+import { getAppSettings } from '@/lib/data/settings';
 import type { EmploymentType, JobStatus } from '@/lib/supabase/types';
 
 export type JobFormState = { error?: string } | undefined;
@@ -51,10 +52,16 @@ export async function createJob(_prevState: JobFormState, formData: FormData): P
     return { error: 'Job title is required.' };
   }
 
+  const settings = await getAppSettings();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('jobs')
-    .insert({ ...payload, created_by: user.id, status: 'draft' as JobStatus })
+    .insert({
+      ...payload,
+      created_by: user.id,
+      status: 'draft' as JobStatus,
+      scoring_weights: settings.default_scoring_weights,
+    })
     .select('id')
     .single();
 

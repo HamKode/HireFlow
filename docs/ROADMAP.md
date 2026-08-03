@@ -33,9 +33,10 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - You: (optional) a free DocuSign or Dropbox Sign developer account if you want real e-signatures instead of the simulate button — the dashboard flow works fully without it.
 - Verified: PDF generation round-tripped (generated → parsed back → exact text matched); the real `/api/webhooks/esignature` route tested end-to-end against a real seeded application — offer signed, application moved `interviewed → offer_pending → offer_sent → onboarding`, 6 onboarding tasks created, full `automation_logs` chain confirmed correct.
 
-## Phase 7 — Analytics, Audit Log, Notifications, Settings (Scenarios 13–14)
-- Claude: analytics dashboard (charts), audit log viewer, notification center, admin settings (AI config, scoring weights, templates).
-- You: review.
+## Phase 7 — Analytics, Notifications, Settings ✅
+- Claude: analytics dashboard (recruitment funnel, status/source bar charts, job/source performance tables, shortlist/interview/offer/hire rates, avg screening/interview scores, avg time-to-hire — computed from current `applications.status`, documented as a stage-reached proxy rather than a full historical trace); in-app notification bell (fan-out to the recruiting team on: candidate needs HR review, interview feedback submitted, offer signed) with mark-read; admin Settings page (company name used on offer letters, default scoring weights for new jobs, default interview duration) backed by a new `app_settings` table — falls back to hardcoded defaults gracefully if the migration hasn't run yet, so it never hard-fails. AI model/temperature stay env-var-configured (`GROQ_MODEL`), deliberately not moved into the dashboard, so changing models can never leak the API key through the UI. Audit Log viewer already shipped in Phase 2.
+- You: run the `app_settings` SQL patch (given during the session) in the Supabase SQL editor.
+- Verified: analytics aggregation tested against real seeded data (49 applications across 14 statuses, avg score correctly computed); notification fan-out tested against real profiles (inserts one row per recruiting-team member); settings fallback confirmed (queries the live DB, which doesn't have `app_settings` yet, and the app degrades to defaults instead of erroring).
 
 ## Phase 8 — Demo Data, Deploy, QA
 - Claude: realistic demo dataset, deployment config, final pass through the full pipeline.

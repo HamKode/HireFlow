@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireRole, requireUser } from '@/lib/auth/dal';
 import { notifyApplicationEvent } from '@/lib/integrations/make';
+import { notifyRecruitingTeam } from '@/lib/notifications/notify';
 import type { Application, InterviewStatus, InterviewType, InterviewRecommendation } from '@/lib/supabase/types';
 
 export type InterviewFormState = { error?: string } | undefined;
@@ -142,6 +143,19 @@ export async function submitFeedback(
     source: 'dashboard',
     payload: { interview_id: interviewId },
   });
+
+  if (application) {
+    const { data: candidate } = await supabase
+      .from('candidates')
+      .select('full_name')
+      .eq('id', application.candidate_id)
+      .single();
+    await notifyRecruitingTeam(supabase, {
+      title: 'Interview feedback submitted',
+      message: `Feedback for ${candidate?.full_name ?? 'a candidate'} is ready for review.`,
+      relatedApplicationId: applicationId,
+    });
+  }
 
   if (application) {
     await notifyApplicationEvent(supabase, {

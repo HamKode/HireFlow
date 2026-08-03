@@ -7,11 +7,11 @@ import { requireRole } from '@/lib/auth/dal';
 import { notifyApplicationEvent } from '@/lib/integrations/make';
 import { generateOfferLetterPdf } from '@/lib/pdf/offer-letter';
 import { createDefaultOnboardingTasks } from '@/lib/onboarding/tasks';
+import { notifyRecruitingTeam } from '@/lib/notifications/notify';
+import { getAppSettings } from '@/lib/data/settings';
 import type { Application, EmploymentType } from '@/lib/supabase/types';
 
 export type OfferFormState = { error?: string } | undefined;
-
-const COMPANY_NAME = 'HireFlow AI';
 
 export async function createOffer(
   applicationId: string,
@@ -40,6 +40,7 @@ export async function createOffer(
   const benefits = String(formData.get('benefits') ?? '').trim() || null;
   const acceptanceDeadline = String(formData.get('acceptance_deadline') ?? '') || null;
   const employmentType = (String(formData.get('employment_type') ?? job.employment_type) as EmploymentType) || job.employment_type;
+  const settings = await getAppSettings();
 
   const pdfBytes = await generateOfferLetterPdf({
     candidateName: candidate.full_name,
@@ -50,7 +51,7 @@ export async function createOffer(
     joiningDate,
     benefits,
     acceptanceDeadline,
-    companyName: COMPANY_NAME,
+    companyName: settings.company_name,
   });
 
   const pdfPath = `${candidate.id}/${Date.now()}-offer-letter.pdf`;
@@ -191,6 +192,17 @@ export async function applyOfferSigned(
     .eq('id', offer.application_id)
     .select('*')
     .single();
+
+  const { data: hiredCandidate } = await supabase
+    .from('candidates')
+    .select('full_name')
+    .eq('id', offer.candidate_id)
+    .single();
+  await notifyRecruitingTeam(supabase, {
+    title: 'Offer signed — candidate hired',
+    message: `${hiredCandidate?.full_name ?? 'A candidate'} signed their offer. Onboarding checklist created.`,
+    relatedApplicationId: offer.application_id,
+  });
 
   await supabase.from('automation_logs').insert({
     application_id: offer.application_id,

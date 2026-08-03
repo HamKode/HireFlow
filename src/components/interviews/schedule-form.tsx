@@ -10,9 +10,11 @@ const labelClass = 'text-sm font-medium';
 export function ScheduleInterviewForm({
   action,
   interviewers,
+  defaultDurationMinutes = 45,
 }: {
   action: (state: InterviewFormState, formData: FormData) => Promise<InterviewFormState>;
   interviewers: { id: string; full_name: string; role: string }[];
+  defaultDurationMinutes?: number;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
@@ -29,7 +31,13 @@ export function ScheduleInterviewForm({
           <label className={labelClass} htmlFor="duration_minutes">
             Duration (minutes)
           </label>
-          <input id="duration_minutes" name="duration_minutes" type="number" defaultValue={45} className={inputClass} />
+          <input
+            id="duration_minutes"
+            name="duration_minutes"
+            type="number"
+            defaultValue={defaultDurationMinutes}
+            className={inputClass}
+          />
         </div>
       </div>
 
