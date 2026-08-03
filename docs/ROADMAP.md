@@ -38,9 +38,10 @@ Each phase is completed, tested, and committed before the next one starts. "Clau
 - You: run the `app_settings` SQL patch (given during the session) in the Supabase SQL editor.
 - Verified: analytics aggregation tested against real seeded data (49 applications across 14 statuses, avg score correctly computed); notification fan-out tested against real profiles (inserts one row per recruiting-team member); settings fallback confirmed (queries the live DB, which doesn't have `app_settings` yet, and the app degrades to defaults instead of erroring).
 
-## Phase 8 — Demo Data, Deploy, QA
-- Claude: realistic demo dataset, deployment config, final pass through the full pipeline.
-- You: free Vercel account for hosting (optional — can also run locally for a demo).
+## Phase 8 — Demo Data, Deploy, QA ✅ (data/QA) — deploy optional
+- Claude: enriched demo data (found and removed leftover test-candidate cruft from earlier phase testing; added 2 more interviews with real AI-generated questions/feedback/evaluation, 2 more offers at draft/sent stages so all pipeline stages have a real example); final QA pass (`tsc --noEmit` clean, `npm run lint` clean — fixed one unescaped-entity warning, production build clean across all 29 routes, live smoke test of public/protected routes); refreshed README with the full feature list and corrected architecture description.
+- You: (optional) a free Vercel account if you want this hosted rather than run locally — see the deployment section below.
+- Verified: final demo data counts — 6 jobs, 51 candidates, 47 applications, 42 scores, 3 interviews (with feedback + AI evaluations), 3 offers (draft/sent/signed), 6 onboarding tasks, 66 automation log entries.
 
 ---
 **Rule for every phase:** nothing moves to the next phase until the current one runs end-to-end without errors.

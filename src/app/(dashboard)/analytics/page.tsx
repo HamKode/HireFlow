@@ -11,7 +11,7 @@ export default async function AnalyticsPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Stage rates are computed from each application's current status (has it ever reached this stage or
+          Stage rates are computed from each application&apos;s current status (has it ever reached this stage or
           beyond), not a full historical trace.
         </p>
       </div>
