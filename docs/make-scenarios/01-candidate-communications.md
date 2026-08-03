@@ -73,7 +73,11 @@ Keep rejection copy exactly this neutral — no AI-generated reasoning about *wh
 
 1. ✅ Free Make.com account → new scenario → Custom Webhook module, URL copied into `MAKE_APPLICATION_WEBHOOK_URL`.
 2. ✅ Confirmed the app can reach it (`automation_logs` shows `MAKE_WEBHOOK_NOTIFIED` / success on a real test application).
-3. In Make, add the Supabase connection (Settings → your project URL + service role key — stored inside Make, never in this repo).
-4. Add the Gmail connection (OAuth, one click).
-5. Build the Router + branches + templates above.
-6. Send one real test application through `/apply/<jobId>` in the app and confirm the email arrives, then attach the error handler and activate the scenario.
+3. ✅ Supabase connection added in Make (project URL + service role key, stored inside Make).
+4. ✅ Gmail connection added (OAuth).
+5. ✅ Router → filter (`record.status = applied`) → Supabase (candidates) → Supabase (jobs) → Gmail built for the **Application Received** branch.
+6. ✅ Error handler attached to the Gmail module (logs failures to `automation_logs`).
+7. ✅ Sent a real test application and confirmed the email arrived in a real inbox.
+8. ✅ Scenario turned **ON** (no longer just "Run once" — it fires automatically now).
+
+**Live and working.** The `Shortlisted` and `Rejection` branches (filters + Supabase lookups + Gmail, same pattern as above) are documented but not built yet — add them the same way, on your own schedule, whenever you're ready to wire up automated emails for those stages too. They aren't required for the pipeline to keep working.
