@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { CheckCircle2, UploadCloud } from 'lucide-react';
 
-const inputClass =
-  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white';
-const labelClass = 'text-sm font-medium';
+const inputClass = 'input';
+const labelClass = 'label';
 
 export function ApplyForm({ jobId }: { jobId: string }) {
   const [submitting, setSubmitting] = useState(false);
@@ -36,9 +36,14 @@ export function ApplyForm({ jobId }: { jobId: string }) {
 
   if (result) {
     return (
-      <div className="rounded-lg border border-neutral-200 p-6 text-center dark:border-neutral-800">
-        <h2 className="text-lg font-semibold">{result.alreadyApplied ? "You've already applied" : 'Application received'}</h2>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+      <div className="card animate-scale-in flex flex-col items-center p-8 text-center">
+        <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <CheckCircle2 className="h-6 w-6" />
+        </span>
+        <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">
+          {result.alreadyApplied ? "You've already applied" : 'Application received'}
+        </h2>
+        <p className="mt-1.5 text-sm text-ink-500">
           {result.alreadyApplied
             ? 'We found an existing application from you for this role — no need to submit again.'
             : "Thanks for applying. Our team will review your application and be in touch."}
@@ -48,8 +53,8 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="card space-y-4 p-5 sm:p-6" encType="multipart/form-data">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className={labelClass} htmlFor="full_name">
             Full name *
@@ -64,7 +69,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className={labelClass} htmlFor="phone">
             Phone
@@ -79,7 +84,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
           <label className={labelClass} htmlFor="linkedin_url">
             LinkedIn
@@ -100,7 +105,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
           <label className={labelClass} htmlFor="years_experience">
             Years of experience
@@ -141,7 +146,16 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         <label className={labelClass} htmlFor="resume">
           Resume (PDF, DOCX, or TXT)
         </label>
-        <input id="resume" name="resume" type="file" accept=".pdf,.docx,.txt" className={inputClass} />
+        <div className="relative">
+          <input
+            id="resume"
+            name="resume"
+            type="file"
+            accept=".pdf,.docx,.txt"
+            className="input cursor-pointer file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-brand-700 dark:file:bg-brand-500/10 dark:file:text-brand-300"
+          />
+          <UploadCloud className="pointer-events-none absolute right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-ink-400 sm:block" />
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -151,13 +165,13 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         <textarea id="cover_letter" name="cover_letter" rows={4} className={inputClass} />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          {error}
+        </p>
+      )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-      >
+      <button type="submit" disabled={submitting} className="btn-primary w-full py-2.5">
         {submitting ? 'Submitting…' : 'Submit application'}
       </button>
     </form>

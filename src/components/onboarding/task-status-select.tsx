@@ -19,7 +19,7 @@ export function TaskStatusSelect({ taskId, status }: { taskId: string; status: O
           updateOnboardingTaskStatus(taskId, next);
         });
       }}
-      className="rounded-md border border-neutral-300 bg-transparent px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700"
+      className="select-compact"
     >
       {STATUSES.map((s) => (
         <option key={s} value={s}>

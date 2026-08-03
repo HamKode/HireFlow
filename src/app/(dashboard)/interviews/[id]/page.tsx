@@ -9,8 +9,7 @@ import { EvaluationPanel } from '@/components/interviews/evaluation-panel';
 import type { InterviewFeedback, InterviewStatus } from '@/lib/supabase/types';
 import type { InterviewQuestionsResult } from '@/lib/ai/schemas';
 
-const actionButtonClass =
-  'rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900';
+const actionButtonClass = 'btn-secondary px-3! py-1.5! text-xs';
 
 const STATUS_OPTIONS: InterviewStatus[] = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show', 'rescheduled'];
 
@@ -27,23 +26,23 @@ export default async function InterviewDetailPage({ params }: { params: Promise<
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
             {candidate.full_name} — {job.title}
           </h1>
           <StatusBadge status={interview.status} />
         </div>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-sm text-ink-500">
           {interview.scheduled_at ? new Date(interview.scheduled_at).toLocaleString() : 'No time set'} ·{' '}
           {interview.interview_type.replace('_', ' ')} · {interview.duration_minutes} min
           {interview.interviewer && ` · Interviewer: ${interview.interviewer.full_name}`}
         </p>
         {interview.meeting_link && (
-          <a href={interview.meeting_link} target="_blank" className="text-sm text-blue-600 hover:underline">
+          <a href={interview.meeting_link} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand-600 hover:text-brand-700">
             {interview.meeting_link}
           </a>
         )}
-        <div className="mt-2 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <Link href={`/candidates/${candidate.id}`} className={actionButtonClass}>
             View candidate
           </Link>
@@ -57,8 +56,8 @@ export default async function InterviewDetailPage({ params }: { params: Promise<
 
       <QuestionsPanel interviewId={interview.id} initialQuestions={interview.ai_generated_questions as InterviewQuestionsResult | null} />
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold">Interviewer feedback</h2>
+      <section className="card space-y-3 p-5">
+        <h2 className="text-sm font-semibold text-ink-900 dark:text-white">Interviewer feedback</h2>
         <FeedbackForm action={submitFeedback.bind(null, interview.id, interview.application.id)} initial={feedback} />
       </section>
 

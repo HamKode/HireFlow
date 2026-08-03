@@ -3,9 +3,8 @@
 import { useActionState } from 'react';
 import type { ApplicationFormState } from '@/app/actions/applications';
 
-const inputClass =
-  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white';
-const labelClass = 'text-sm font-medium';
+const inputClass = 'input';
+const labelClass = 'label';
 
 export function NewApplicationForm({
   action,
@@ -21,7 +20,7 @@ export function NewApplicationForm({
   const [state, formAction, pending] = useActionState(action, undefined);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="card space-y-4 p-5 sm:p-6">
       <div className="space-y-1.5">
         <label className={labelClass} htmlFor="candidate_id">
           Candidate *
@@ -70,13 +69,13 @@ export function NewApplicationForm({
         </select>
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          {state.error}
+        </p>
+      )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-      >
+      <button type="submit" disabled={pending} className="btn-primary px-5 py-2.5">
         {pending ? 'Linking…' : 'Create application'}
       </button>
     </form>

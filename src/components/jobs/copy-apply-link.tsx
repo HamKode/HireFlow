@@ -13,10 +13,7 @@ export function CopyApplyLink({ jobId }: { jobId: string }) {
   }
 
   return (
-    <button
-      onClick={copy}
-      className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-    >
+    <button onClick={copy} className="btn-secondary">
       {copied ? 'Link copied' : 'Copy application link'}
     </button>
   );

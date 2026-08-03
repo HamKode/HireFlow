@@ -10,7 +10,10 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Edit job</h1>
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">Edit job</h1>
+        <p className="mt-1 text-sm text-ink-500">Update the listing — changes save once you submit below.</p>
+      </div>
       <JobForm action={updateJob.bind(null, id)} initial={job} submitLabel="Save changes" />
     </div>
   );

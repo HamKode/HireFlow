@@ -7,49 +7,56 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Offers</h1>
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">Offers</h1>
+        <p className="mt-1 text-sm text-ink-500">Every offer letter, from draft to signed.</p>
+      </div>
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
-        <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Candidate</th>
-              <th className="px-4 py-3 font-medium">Job</th>
-              <th className="px-4 py-3 font-medium">Salary</th>
-              <th className="px-4 py-3 font-medium">Joining date</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {offers.map((offer) => (
-              <tr
-                key={offer.id}
-                className="border-t border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-              >
-                <td className="px-4 py-3">
-                  <Link href={`/offers/${offer.id}`} className="font-medium hover:underline">
-                    {offer.candidate.full_name}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{offer.job.title}</td>
-                <td className="px-4 py-3">{offer.salary.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
-                <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">
-                  {offer.joining_date ? new Date(offer.joining_date).toLocaleDateString() : '—'}
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge status={offer.status} />
-                </td>
-              </tr>
-            ))}
-            {offers.length === 0 && (
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-ink-50 text-left text-xs font-medium uppercase tracking-wide text-ink-500 dark:bg-white/5">
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-                  No offers yet.
-                </td>
+                <th className="px-4 py-3">Candidate</th>
+                <th className="px-4 py-3">Job</th>
+                <th className="px-4 py-3">Salary</th>
+                <th className="px-4 py-3">Joining date</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {offers.map((offer) => (
+                <tr
+                  key={offer.id}
+                  className="border-t border-ink-100 transition-colors hover:bg-ink-50/70 dark:border-white/10 dark:hover:bg-white/5"
+                >
+                  <td className="px-4 py-3">
+                    <Link href={`/offers/${offer.id}`} className="font-medium text-ink-900 hover:text-brand-600 dark:text-white">
+                      {offer.candidate.full_name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-ink-500">{offer.job.title}</td>
+                  <td className="px-4 py-3 font-semibold text-ink-900 dark:text-white">
+                    {offer.salary.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                  </td>
+                  <td className="px-4 py-3 text-ink-500">
+                    {offer.joining_date ? new Date(offer.joining_date).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={offer.status} />
+                  </td>
+                </tr>
+              ))}
+              {offers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink-400">
+                    No offers yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

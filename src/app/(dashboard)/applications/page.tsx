@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Link2 } from 'lucide-react';
 import { listApplications, listJobOptions } from '@/lib/data/applications';
 import { StatusSelect } from '@/components/applications/status-select';
 import type { ApplicationStatus } from '@/lib/supabase/types';
@@ -16,22 +17,21 @@ export default async function ApplicationsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Applications</h1>
-        <Link
-          href="/applications/new"
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-        >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
+            Applications
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Every candidate&apos;s pipeline stage, at a glance.</p>
+        </div>
+        <Link href="/applications/new" className="btn-primary">
+          <Link2 className="h-4 w-4" />
           Link candidate to job
         </Link>
       </div>
 
-      <form className="flex gap-3">
-        <select
-          name="job"
-          defaultValue={params.job ?? ''}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-        >
+      <form className="flex flex-col gap-3 sm:flex-row">
+        <select name="job" defaultValue={params.job ?? ''} className="input sm:w-64">
           <option value="">All jobs</option>
           {jobs.map((job) => (
             <option key={job.id} value={job.id}>
@@ -39,61 +39,62 @@ export default async function ApplicationsPage({
             </option>
           ))}
         </select>
-        <button
-          type="submit"
-          className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium dark:border-neutral-700"
-        >
+        <button type="submit" className="btn-secondary">
           Filter
         </button>
       </form>
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
-        <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Candidate</th>
-              <th className="px-4 py-3 font-medium">Job</th>
-              <th className="px-4 py-3 font-medium">Source</th>
-              <th className="px-4 py-3 font-medium">Score</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.map((app) => {
-              const score = Array.isArray(app.candidate_scores) ? app.candidate_scores[0] : app.candidate_scores;
-              return (
-                <tr
-                  key={app.id}
-                  className="border-t border-neutral-100 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-                >
-                  <td className="px-4 py-3">
-                    <Link href={`/candidates/${app.candidate.id}`} className="font-medium hover:underline">
-                      {app.candidate.full_name}
-                    </Link>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{app.candidate.email}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/jobs/${app.job.id}`} className="hover:underline">
-                      {app.job.title}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{app.source.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-3 font-medium">{score?.weighted_final_score ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <StatusSelect applicationId={app.id} status={app.status} />
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-ink-50 text-left text-xs font-medium uppercase tracking-wide text-ink-500 dark:bg-white/5">
+              <tr>
+                <th className="px-4 py-3">Candidate</th>
+                <th className="px-4 py-3">Job</th>
+                <th className="px-4 py-3">Source</th>
+                <th className="px-4 py-3">Score</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => {
+                const score = Array.isArray(app.candidate_scores) ? app.candidate_scores[0] : app.candidate_scores;
+                return (
+                  <tr
+                    key={app.id}
+                    className="border-t border-ink-100 transition-colors hover:bg-ink-50/70 dark:border-white/10 dark:hover:bg-white/5"
+                  >
+                    <td className="px-4 py-3">
+                      <Link href={`/candidates/${app.candidate.id}`} className="font-medium text-ink-900 hover:text-brand-600 dark:text-white">
+                        {app.candidate.full_name}
+                      </Link>
+                      <p className="text-xs text-ink-500">{app.candidate.email}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/jobs/${app.job.id}`} className="text-ink-700 hover:text-brand-600 dark:text-ink-300">
+                        {app.job.title}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-ink-500">{app.source.replace(/_/g, ' ')}</td>
+                    <td className="px-4 py-3 font-semibold text-ink-900 dark:text-white">
+                      {score?.weighted_final_score ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusSelect applicationId={app.id} status={app.status} />
+                    </td>
+                  </tr>
+                );
+              })}
+              {applications.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-ink-400">
+                    No applications yet.
                   </td>
                 </tr>
-              );
-            })}
-            {applications.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500 dark:text-neutral-400">
-                  No applications yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

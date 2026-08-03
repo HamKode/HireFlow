@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
 
 export function EvaluationPanel({
   interviewId,
@@ -39,31 +40,28 @@ export function EvaluationPanel({
   }
 
   return (
-    <section className="space-y-2 rounded-md border border-neutral-200 p-4 dark:border-neutral-800">
+    <section className="card space-y-2 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">AI evaluation summary</h2>
-        <button
-          onClick={run}
-          disabled={running}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-        >
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900 dark:text-white">
+          <Sparkles className="h-4 w-4 text-brand-500" />
+          AI evaluation summary
+        </h2>
+        <button onClick={run} disabled={running} className="btn-secondary px-3! py-1.5! text-xs">
           {running ? 'Evaluating…' : initialSummary ? 'Re-run' : 'Run AI evaluation'}
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
       {initialSummary ? (
-        <div className="space-y-1.5 text-sm">
+        <div className="space-y-1.5 text-sm text-ink-700 dark:text-ink-300">
           <p>{initialSummary}</p>
           {initialNextAction && (
-            <p className="text-neutral-600 dark:text-neutral-400">
-              <span className="font-medium">Suggested next step:</span> {initialNextAction}
+            <p className="text-ink-500">
+              <span className="font-medium text-ink-900 dark:text-white">Suggested next step:</span> {initialNextAction}
             </p>
           )}
         </div>
       ) : (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Not evaluated yet — requires interviewer feedback to be submitted first.
-        </p>
+        <p className="text-sm text-ink-500">Not evaluated yet — requires interviewer feedback to be submitted first.</p>
       )}
     </section>
   );

@@ -17,6 +17,17 @@ Next.js (UI + application logic) → Supabase (system of record) → Groq (AI la
 
 **Build status:** all 9 phases complete — see [docs/ROADMAP.md](docs/ROADMAP.md) for what was built in each and how it was verified.
 
+## Live Demo
+
+Want to try it without setting anything up? Sign in with the shared demo account below — it comes pre-loaded with sample jobs, candidates, and applications:
+
+| | |
+|---|---|
+| **Email** | `demo@hireflowai.com` |
+| **Password** | `HireFlowDemo123` |
+
+> This is a shared sandbox — anyone testing at the same time sees and can edit the same demo data. For a private, fully isolated workspace with your own data, sign up for a free account instead — it takes seconds and you'll be the admin of your own organization.
+
 ## Features
 
 - **Multi-tenant** — signing up creates a brand-new, fully isolated organization (your own jobs, candidates, applications, everything) with you as its admin. Enforced at the database level via Supabase RLS on every table, not just in application code.

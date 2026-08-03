@@ -13,23 +13,36 @@ export default async function ApplyPage({ params }: { params: Promise<{ jobId: s
   const typedJob = job as Job;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <div className="mb-8 space-y-2">
-        <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">HireFlow AI</p>
-        <h1 className="text-2xl font-semibold tracking-tight">{typedJob.title}</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {[typedJob.department, typedJob.location, typedJob.employment_type.replace('_', ' ')]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-        {typedJob.description && (
-          <p className="whitespace-pre-line pt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            {typedJob.description}
+    <main className="min-h-full flex-1 bg-background">
+      <div className="border-b border-ink-200/70 bg-linear-to-b from-brand-50/60 to-transparent dark:border-white/10 dark:from-brand-500/5">
+        <div className="mx-auto max-w-2xl px-6 py-12">
+          <span className="mb-4 inline-flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-linear-to-br from-brand-500 to-accent-500 font-display text-xs font-extrabold text-white">
+              H
+            </span>
+            <span className="font-display text-sm font-bold tracking-tight text-ink-900 dark:text-white">
+              HireFlow <span className="text-brand-600">AI</span>
+            </span>
+          </span>
+          <h1 className="animate-fade-up font-display text-3xl font-bold tracking-tight text-ink-900 dark:text-white">
+            {typedJob.title}
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            {[typedJob.department, typedJob.location, typedJob.employment_type.replace('_', ' ')]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
-        )}
+          {typedJob.description && (
+            <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-ink-600 dark:text-ink-300">
+              {typedJob.description}
+            </p>
+          )}
+        </div>
       </div>
 
-      <ApplyForm jobId={typedJob.id} />
+      <div className="mx-auto max-w-2xl px-6 py-10">
+        <ApplyForm jobId={typedJob.id} />
+      </div>
     </main>
   );
 }

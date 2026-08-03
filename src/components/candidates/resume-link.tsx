@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FileText } from 'lucide-react';
 
 export function ResumeLink({ path }: { path: string }) {
   const [loading, setLoading] = useState(false);
@@ -24,11 +25,8 @@ export function ResumeLink({ path }: { path: string }) {
 
   return (
     <div>
-      <button
-        onClick={open}
-        disabled={loading}
-        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-      >
+      <button onClick={open} disabled={loading} className="btn-secondary">
+        <FileText className="h-3.5 w-3.5" />
         {loading ? 'Opening…' : 'View uploaded resume'}
       </button>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}

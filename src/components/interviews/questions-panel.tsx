@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { saveGeneratedQuestions } from '@/app/actions/interviews';
 import type { InterviewQuestionsResult } from '@/lib/ai/schemas';
 
@@ -47,14 +48,13 @@ export function QuestionsPanel({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="card space-y-3 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">AI-generated interview questions</h2>
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-        >
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900 dark:text-white">
+          <Sparkles className="h-4 w-4 text-brand-500" />
+          AI-generated interview questions
+        </h2>
+        <button onClick={generate} disabled={generating} className="btn-secondary px-3! py-1.5! text-xs">
           {generating ? 'Generating…' : questions ? 'Regenerate' : 'Generate questions'}
         </button>
       </div>
@@ -66,8 +66,8 @@ export function QuestionsPanel({
             if (!items || items.length === 0) return null;
             return (
               <div key={key}>
-                <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</p>
-                <ul className="mt-1 list-inside list-disc space-y-1 text-sm">
+                <p className="text-xs font-medium text-ink-500">{label}</p>
+                <ul className="mt-1 list-inside list-disc space-y-1 text-sm text-ink-700 dark:text-ink-300">
                   {items.map((q) => (
                     <li key={q}>{q}</li>
                   ))}
@@ -77,7 +77,7 @@ export function QuestionsPanel({
           })}
         </div>
       ) : (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">No questions generated yet.</p>
+        <p className="text-sm text-ink-500">No questions generated yet.</p>
       )}
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
 import type { CandidateScore } from '@/lib/supabase/types';
 
 export function ScreeningPanel({ applicationId, score }: { applicationId: string; score: CandidateScore | null }) {
@@ -32,14 +33,13 @@ export function ScreeningPanel({ applicationId, score }: { applicationId: string
   }
 
   return (
-    <div className="space-y-2 rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
+    <div className="space-y-2 rounded-xl border border-brand-200/70 bg-brand-50/40 p-3 dark:border-brand-500/20 dark:bg-brand-500/5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">AI Screening</p>
-        <button
-          onClick={runScreening}
-          disabled={running}
-          className="rounded-md border border-neutral-300 px-2.5 py-1 text-xs font-medium transition hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
-        >
+        <p className="flex items-center gap-1.5 text-xs font-medium text-ink-600 dark:text-ink-300">
+          <Sparkles className="h-3.5 w-3.5 text-brand-500" />
+          AI Screening
+        </p>
+        <button onClick={runScreening} disabled={running} className="btn-secondary px-2.5! py-1! text-xs">
           {running ? 'Screening…' : score ? 'Re-run' : 'Run AI screening'}
         </button>
       </div>
@@ -49,20 +49,20 @@ export function ScreeningPanel({ applicationId, score }: { applicationId: string
       {score && (
         <div className="space-y-1.5 text-sm">
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold">{score.weighted_final_score}</span>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              suggested: {score.routing_decision?.replace(/_/g, ' ')}
+            <span className="font-display text-lg font-bold text-ink-900 dark:text-white">
+              {score.weighted_final_score}
             </span>
+            <span className="text-xs text-ink-500">suggested: {score.routing_decision?.replace(/_/g, ' ')}</span>
           </div>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400">{score.ai_summary}</p>
+          <p className="text-xs text-ink-600 dark:text-ink-300">{score.ai_summary}</p>
           {score.matched_skills.length > 0 && (
-            <p className="text-xs">
-              <span className="font-medium">Matched:</span> {score.matched_skills.join(', ')}
+            <p className="text-xs text-ink-600 dark:text-ink-300">
+              <span className="font-medium text-ink-900 dark:text-white">Matched:</span> {score.matched_skills.join(', ')}
             </p>
           )}
           {score.missing_skills.length > 0 && (
-            <p className="text-xs">
-              <span className="font-medium">Missing:</span> {score.missing_skills.join(', ')}
+            <p className="text-xs text-ink-600 dark:text-ink-300">
+              <span className="font-medium text-ink-900 dark:text-white">Missing:</span> {score.missing_skills.join(', ')}
             </p>
           )}
         </div>

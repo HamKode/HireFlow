@@ -9,8 +9,8 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">Analytics</h1>
+        <p className="mt-1 text-sm text-ink-500">
           Stage rates are computed from each application&apos;s current status (has it ever reached this stage or
           beyond), not a full historical trace.
         </p>
@@ -62,29 +62,31 @@ function PerformanceTable({
   rows: { label: string; applications: number; hires: number }[];
 }) {
   return (
-    <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+    <div className="card p-4">
+      <h3 className="mb-3 text-sm font-semibold text-ink-900 dark:text-white">{title}</h3>
       {rows.length === 0 ? (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">No data yet.</p>
+        <p className="text-sm text-ink-400">No data yet.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase text-neutral-500 dark:text-neutral-400">
-              <th className="pb-2 font-medium">Name</th>
-              <th className="pb-2 font-medium text-right">Applications</th>
-              <th className="pb-2 font-medium text-right">Hires</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.label} className="border-t border-neutral-100 dark:border-neutral-800">
-                <td className="py-1.5 capitalize">{row.label}</td>
-                <td className="py-1.5 text-right tabular-nums">{row.applications}</td>
-                <td className="py-1.5 text-right tabular-nums">{row.hires}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-ink-400">
+                <th className="pb-2 font-medium">Name</th>
+                <th className="pb-2 text-right font-medium">Applications</th>
+                <th className="pb-2 text-right font-medium">Hires</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.label} className="border-t border-ink-100 dark:border-white/10">
+                  <td className="py-1.5 capitalize text-ink-700 dark:text-ink-300">{row.label}</td>
+                  <td className="py-1.5 text-right tabular-nums text-ink-900 dark:text-white">{row.applications}</td>
+                  <td className="py-1.5 text-right tabular-nums text-ink-900 dark:text-white">{row.hires}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

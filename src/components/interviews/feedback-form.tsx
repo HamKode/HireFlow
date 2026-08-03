@@ -4,9 +4,8 @@ import { useActionState } from 'react';
 import type { FeedbackFormState } from '@/app/actions/interviews';
 import type { InterviewFeedback } from '@/lib/supabase/types';
 
-const inputClass =
-  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white';
-const labelClass = 'text-sm font-medium';
+const inputClass = 'input';
+const labelClass = 'label';
 
 const RATING_FIELDS: { key: keyof InterviewFeedback; label: string }[] = [
   { key: 'technical_knowledge', label: 'Technical knowledge' },
@@ -27,7 +26,7 @@ export function FeedbackForm({
 
   return (
     <form action={formAction} className="space-y-4">
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {RATING_FIELDS.map(({ key, label }) => (
           <div key={key} className="space-y-1.5">
             <label className={labelClass} htmlFor={key}>
@@ -86,13 +85,13 @@ export function FeedbackForm({
         </select>
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          {state.error}
+        </p>
+      )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-      >
+      <button type="submit" disabled={pending} className="btn-primary px-5 py-2.5">
         {pending ? 'Saving…' : initial ? 'Update feedback' : 'Submit feedback'}
       </button>
     </form>

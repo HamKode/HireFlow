@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { Bell } from 'lucide-react';
 import { markNotificationRead, markAllNotificationsRead } from '@/app/actions/notifications';
 import type { Notification } from '@/lib/supabase/types';
 
@@ -41,50 +42,48 @@ export function NotificationBell({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-ink-200 bg-white text-ink-500 transition-colors hover:border-ink-300 hover:bg-ink-50 hover:text-ink-700 dark:border-white/10 dark:bg-ink-900 dark:text-ink-400 dark:hover:bg-ink-800"
         aria-label="Notifications"
       >
-        🔔
+        <Bell className="h-4.5 w-4.5" />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-medium text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white ring-2 ring-white dark:ring-ink-950">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-950">
-          <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2 dark:border-neutral-800">
-            <p className="text-sm font-medium">Notifications</p>
+        <div className="animate-scale-in absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-2xl border border-ink-200/70 bg-white shadow-xl shadow-ink-900/10 dark:border-white/10 dark:bg-ink-900">
+          <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3 dark:border-white/10">
+            <p className="text-sm font-semibold text-ink-900 dark:text-white">Notifications</p>
             {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-xs text-blue-600 hover:underline">
+              <button onClick={handleMarkAllRead} className="text-xs font-medium text-brand-600 hover:text-brand-700">
                 Mark all read
               </button>
             )}
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
-                No notifications yet.
-              </p>
+              <p className="px-4 py-8 text-center text-sm text-ink-400">No notifications yet.</p>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`border-b border-neutral-100 px-3 py-2.5 text-sm last:border-b-0 dark:border-neutral-800 ${
-                    !n.is_read ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
+                  className={`border-b border-ink-100 px-4 py-3 text-sm last:border-b-0 dark:border-white/10 ${
+                    !n.is_read ? 'bg-brand-50/60 dark:bg-brand-500/5' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium">{n.title}</p>
-                      <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{n.message}</p>
-                      <p className="mt-1 text-[10px] text-neutral-400">{new Date(n.created_at).toLocaleString()}</p>
+                      <p className="font-medium text-ink-900 dark:text-white">{n.title}</p>
+                      <p className="mt-0.5 text-xs text-ink-500">{n.message}</p>
+                      <p className="mt-1 text-[10px] text-ink-400">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                     {!n.is_read && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="shrink-0 text-xs text-blue-600 hover:underline"
+                        className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700"
                       >
                         Mark read
                       </button>
@@ -94,8 +93,8 @@ export function NotificationBell({
               ))
             )}
           </div>
-          <div className="border-t border-neutral-100 px-3 py-2 text-center dark:border-neutral-800">
-            <Link href="/automation-logs" className="text-xs text-neutral-500 hover:underline dark:text-neutral-400">
+          <div className="border-t border-ink-100 px-4 py-2.5 text-center dark:border-white/10">
+            <Link href="/automation-logs" className="text-xs font-medium text-ink-500 hover:text-ink-700">
               View full activity log
             </Link>
           </div>

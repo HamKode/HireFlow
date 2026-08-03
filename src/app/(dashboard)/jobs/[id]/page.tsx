@@ -1,12 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Pencil } from 'lucide-react';
 import { getJob, countApplicationsForJob } from '@/lib/data/jobs';
 import { setJobStatus, duplicateJob } from '@/app/actions/jobs';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { CopyApplyLink } from '@/components/jobs/copy-apply-link';
-
-const actionButtonClass =
-  'rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium transition hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900';
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,17 +15,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold tracking-tight">{job.title}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
+              {job.title}
+            </h1>
             <StatusBadge status={job.status} />
           </div>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 text-sm text-ink-500">
             {[job.department, job.location, job.employment_type.replace('_', ' ')].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <Link href={`/jobs/${job.id}/edit`} className={actionButtonClass}>
+        <Link href={`/jobs/${job.id}/edit`} className="btn-secondary">
+          <Pencil className="h-3.5 w-3.5" />
           Edit
         </Link>
       </div>
@@ -35,29 +36,29 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       <div className="flex flex-wrap gap-2">
         {job.status !== 'published' && (
           <form action={setJobStatus.bind(null, job.id, 'published')}>
-            <button className={actionButtonClass}>Publish</button>
+            <button className="btn-secondary">Publish</button>
           </form>
         )}
         {job.status === 'published' && (
           <form action={setJobStatus.bind(null, job.id, 'paused')}>
-            <button className={actionButtonClass}>Pause</button>
+            <button className="btn-secondary">Pause</button>
           </form>
         )}
         {job.status !== 'closed' && (
           <form action={setJobStatus.bind(null, job.id, 'closed')}>
-            <button className={actionButtonClass}>Close</button>
+            <button className="btn-secondary">Close</button>
           </form>
         )}
         <form action={duplicateJob.bind(null, job.id)}>
-          <button className={actionButtonClass}>Duplicate</button>
+          <button className="btn-secondary">Duplicate</button>
         </form>
-        <Link href={`/applications?job=${job.id}`} className={actionButtonClass}>
+        <Link href={`/applications?job=${job.id}`} className="btn-secondary">
           View applications ({applicationCount})
         </Link>
         {job.status === 'published' && <CopyApplyLink jobId={job.id} />}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="card grid grid-cols-1 gap-4 p-5 text-sm sm:grid-cols-2">
         <Info label="Experience required" value={job.experience_required} />
         <Info label="Education" value={job.education} />
         <Info
@@ -80,18 +81,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       )}
 
       {job.responsibilities && (
-        <section>
-          <h2 className="mb-1 text-sm font-semibold">Responsibilities</h2>
-          <p className="whitespace-pre-line text-sm text-neutral-600 dark:text-neutral-400">
+        <section className="card p-5">
+          <h2 className="mb-1.5 text-sm font-semibold text-ink-900 dark:text-white">Responsibilities</h2>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ink-600 dark:text-ink-300">
             {job.responsibilities}
           </p>
         </section>
       )}
 
       {job.description && (
-        <section>
-          <h2 className="mb-1 text-sm font-semibold">Description</h2>
-          <p className="whitespace-pre-line text-sm text-neutral-600 dark:text-neutral-400">{job.description}</p>
+        <section className="card p-5">
+          <h2 className="mb-1.5 text-sm font-semibold text-ink-900 dark:text-white">Description</h2>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ink-600 dark:text-ink-300">
+            {job.description}
+          </p>
         </section>
       )}
 
@@ -104,9 +107,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 function CriteriaList({ label, items }: { label: string; items: string[] | null }) {
   if (!items || items.length === 0) return null;
   return (
-    <section>
-      <h2 className="mb-1 text-sm font-semibold">{label}</h2>
-      <ul className="list-inside list-disc space-y-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+    <section className="card p-5">
+      <h2 className="mb-1.5 text-sm font-semibold text-ink-900 dark:text-white">{label}</h2>
+      <ul className="list-inside list-disc space-y-0.5 text-sm text-ink-600 dark:text-ink-300">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -119,8 +122,8 @@ function Info({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</p>
-      <p>{value}</p>
+      <p className="text-xs font-medium text-ink-500">{label}</p>
+      <p className="text-ink-900 dark:text-white">{value}</p>
     </div>
   );
 }
@@ -128,12 +131,12 @@ function Info({ label, value }: { label: string; value: string | null }) {
 function SkillList({ label, skills }: { label: string; skills: string[] }) {
   return (
     <section>
-      <h2 className="mb-1.5 text-sm font-semibold">{label}</h2>
+      <h2 className="mb-1.5 text-sm font-semibold text-ink-900 dark:text-white">{label}</h2>
       <div className="flex flex-wrap gap-1.5">
         {skills.map((skill) => (
           <span
             key={skill}
-            className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+            className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 dark:bg-white/5 dark:text-ink-300"
           >
             {skill}
           </span>

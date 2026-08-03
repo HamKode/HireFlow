@@ -3,18 +3,20 @@
 import { useActionState } from 'react';
 import { createCandidate } from '@/app/actions/candidates';
 
-const inputClass =
-  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-white';
-const labelClass = 'text-sm font-medium';
+const inputClass = 'input';
+const labelClass = 'label';
 
 export default function NewCandidatePage() {
   const [state, action, pending] = useActionState(createCandidate, undefined);
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Add candidate</h1>
-      <form action={action} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-white">Add candidate</h1>
+        <p className="mt-1 text-sm text-ink-500">Enter their details manually — no resume upload required.</p>
+      </div>
+      <form action={action} className="card space-y-4 p-5 sm:p-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className={labelClass} htmlFor="full_name">
               Full name *
@@ -29,7 +31,7 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className={labelClass} htmlFor="phone">
               Phone
@@ -44,7 +46,7 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
             <label className={labelClass} htmlFor="linkedin_url">
               LinkedIn
@@ -65,7 +67,7 @@ export default function NewCandidatePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className={labelClass} htmlFor="years_experience">
               Years of experience
@@ -87,13 +89,13 @@ export default function NewCandidatePage() {
           <input id="technical_skills" name="technical_skills" className={inputClass} />
         </div>
 
-        {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {state?.error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            {state.error}
+          </p>
+        )}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-        >
+        <button type="submit" disabled={pending} className="btn-primary px-5 py-2.5">
           {pending ? 'Saving…' : 'Add candidate'}
         </button>
       </form>

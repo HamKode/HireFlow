@@ -4,8 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { submitFinalReviewDecision } from '@/app/actions/applications';
 
-const buttonClass =
-  'rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900';
+const buttonClass = 'btn-secondary px-3! py-1.5! text-xs';
 
 export function FinalReviewActions({ applicationId }: { applicationId: string }) {
   const router = useRouter();
@@ -21,8 +20,8 @@ export function FinalReviewActions({ applicationId }: { applicationId: string })
   }
 
   return (
-    <div className="space-y-2 rounded-md border border-neutral-200 p-3 dark:border-neutral-800">
-      <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">HR final review</p>
+    <div className="space-y-2 rounded-xl border border-ink-200/70 p-3 dark:border-white/10">
+      <p className="text-xs font-medium text-ink-500">HR final review</p>
       <div className="flex flex-wrap gap-2">
         <button disabled={pending} onClick={() => decide('approve')} className={buttonClass}>
           Approve hire
@@ -44,13 +43,9 @@ export function FinalReviewActions({ applicationId }: { applicationId: string })
             onChange={(e) => setReason(e.target.value)}
             placeholder="Rejection reason (internal only, not sent to candidate)"
             rows={2}
-            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-xs outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
+            className="input text-xs"
           />
-          <button
-            disabled={pending}
-            onClick={() => decide('reject', reason)}
-            className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
+          <button disabled={pending} onClick={() => decide('reject', reason)} className="btn-danger px-3! py-1.5! text-xs">
             Confirm reject
           </button>
         </div>
